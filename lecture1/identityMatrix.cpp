@@ -1,9 +1,6 @@
-#include <iostream>
+#include "utils.hpp"
 #include <mpi.h>
 #include <string>
-#define N 10
-
-void printMatrix(double *, int);
 
 /**
  * Initialize an identity matrix and print it in STDOUT.
@@ -52,13 +49,4 @@ int main(int argc, char *argv[]) {
   }
 
   MPI_Finalize();
-}
-
-void printMatrix(double *A, int nLoc) {
-  for (int i = 0; i < nLoc; ++i) {
-    for (int j = 0; j < N; ++j) {
-      std::cout << A[j + i * N] << " ";
-    }
-    std::cout << std::endl;
-  }
 }
