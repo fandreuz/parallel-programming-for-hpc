@@ -5,4 +5,4 @@
 
 void printMatrix(double *, int);
 
-double * scalarAddMul(double, double, double *, int);
+double *scalarAddMul(double, double, double *, int);
