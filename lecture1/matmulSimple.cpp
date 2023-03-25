@@ -59,14 +59,18 @@ int main(int argc, char *argv[]) {
 
   if (myRank == 0) {
     std::cout << "A" << std::endl;
-    printDistributedMatrix(myRows, A2);
-
-    std::cout << std::endl << "B" << std::endl;
-    printDistributedMatrix(myRows, B2);
-
-    std::cout << std::endl << "C" << std::endl;
-    printDistributedMatrix(myRows, C);
   }
+  printDistributedMatrix(myRows, A2);
+
+  if (myRank == 0) {
+    std::cout << "B" << std::endl;
+  }
+  printDistributedMatrix(myRows, B2);
+
+  if (myRank == 0) {
+    std::cout << "C" << std::endl;
+  }
+  printDistributedMatrix(myRows, C);
   delete[] A2, B2;
   delete[] C;
 
