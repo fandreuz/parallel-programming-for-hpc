@@ -62,11 +62,11 @@ int main(int argc, char *argv[]) {
 
     checkpoint3 = MPI_Wtime();
     double *C_write = C + myRows * proc;
+    double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
+      double *B_block_row0 = B_col_block;
       for (int B_block_col_idx = 0; B_block_col_idx < myRows;
            ++B_block_col_idx) {
-        double *A_loc_row = A2 + A_loc_row_idx * N;
-        double *B_block_row0 = B_col_block + B_block_col_idx * myRows;
         for (int B_proc = 0; B_proc < nProcesses; ++B_proc) {
           double *A_loc_proc_row = A_loc_row + B_proc * myRows;
           double *B_block_proc_row0 = B_block_row0 + B_proc * small_square;
@@ -76,8 +76,10 @@ int main(int argc, char *argv[]) {
           }
         }
         ++C_write;
+        B_block_row0 += myRows;
       }
       C_write += N - myRows;
+      A_loc_row += N;
     }
 
     // save times
