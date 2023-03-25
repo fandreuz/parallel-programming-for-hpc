@@ -2,13 +2,13 @@
 
 double *initIdentityMatrix(int myRank, int nProcesses, int &myRows) {
   myRows = N / nProcesses;
-  int rest = N % nProcesses;
+  int remainder = N % nProcesses;
 
   int offset = 0;
-  if (myRank < rest) {
+  if (myRank < remainder) {
     myRows++;
   } else {
-    offset = rest;
+    offset = remainder;
   }
 
   double *A = new double[N * myRows];

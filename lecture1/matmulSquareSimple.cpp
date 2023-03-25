@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
   if (N % nProcesses != 0) {
-    std::cerr << "Rest is not zero" << std::endl;
+    std::cerr << "Remainder is not zero" << std::endl;
     return 1;
   }
 
