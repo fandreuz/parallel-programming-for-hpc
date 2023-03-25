@@ -43,15 +43,16 @@ int main(int argc, char *argv[]) {
   int small_square = myRows * myRows;
   double *B_send_buffer = new double[small_square];
   double *B_col_block = new double[myRows * N];
+  double *B_row0 = B2;
   for (int proc = 0; proc < nProcesses; ++proc) {
     checkpoint1 = MPI_Wtime();
     for (int B_loc_col = 0; B_loc_col < myRows; ++B_loc_col) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
-      double *B_row0 = B2 + proc * myRows + B_loc_col;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
         // values in the same column are adjacent
         B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * N];
       }
+      ++B_row0;
     }
 
     checkpoint2 = MPI_Wtime();
