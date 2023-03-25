@@ -9,7 +9,7 @@ void printMatrix(double *A, int nLoc) {
   }
 }
 
-void printDistributedMatrix(int myRows, double* C) {
+void printDistributedMatrix(int myRows, double *C) {
   int myRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);

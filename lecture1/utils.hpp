@@ -6,6 +6,6 @@
 #define N 10
 
 void printMatrix(double *, int);
-void printDistributedMatrix(int, double*);
+void printDistributedMatrix(int, double *);
 
 double *scalarAddMul(double, double, double *, int);
