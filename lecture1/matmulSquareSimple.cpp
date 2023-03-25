@@ -47,10 +47,10 @@ int main(int argc, char *argv[]) {
     checkpoint1 = MPI_Wtime();
     for (int B_loc_col = 0; B_loc_col < myRows; ++B_loc_col) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
-      double *B_col_0 = B2 + B_loc_col + proc * myRows;
+      double *B_col0 = B2 + B_loc_col + proc * myRows;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
         // values in the same column are adjacent
-        B_send_buffer_col[B_loc_row] = B_col_0[B_loc_row * N];
+        B_send_buffer_col[B_loc_row] = B_col0[B_loc_row * N];
       }
     }
 
@@ -59,12 +59,20 @@ int main(int argc, char *argv[]) {
                   small_square, MPI_DOUBLE, MPI_COMM_WORLD);
 
     checkpoint3 = MPI_Wtime();
-    for (int i = 0; i < myRows; ++i) {
-      for (int j = 0; j < myRows; ++j) {
-        int c_idx = j + proc * myRows + i * N;
-        for (int k = 0; k < N; ++k) {
-          C[c_idx] += A2[k + i * N] * B_col_block[(k % myRows) + j * myRows +
-                                                  (k / myRows) * small_square];
+    int C_proc_col_offset = proc * myRows;
+    for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
+      for (int B_block_col_idx = 0; B_block_col_idx < myRows;
+           ++B_block_col_idx) {
+        int C_idx = A_loc_row_idx * N + C_proc_col_offset + B_block_col_idx;
+        double *A_loc_row = A2 + A_loc_row_idx * N;
+        double *B_block_row0 = B_col_block + B_block_col_idx * myRows;
+        for (int B_proc = 0; B_proc < nProcesses; ++B_proc) {
+          double *A_loc_proc_row = A_loc_row + B_proc * myRows;
+          double *B_block_proc_row0 = B_block_row0 + B_proc * small_square;
+          for (int B_proc_row = 0; B_proc_row < myRows; ++B_proc_row) {
+            C[C_idx] +=
+                A_loc_proc_row[B_proc_row] * B_block_proc_row0[B_proc_row];
+          }
         }
       }
     }
