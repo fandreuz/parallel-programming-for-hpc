@@ -63,11 +63,11 @@ int main(int argc, char *argv[]) {
 
     std::cout << std::endl << "B" << std::endl;
     printDistributedMatrix(myRows, B2);
+
+    std::cout << std::endl << "C" << std::endl;
+    printDistributedMatrix(myRows, C);
   }
   delete[] A2, B2;
-
-  std::cout << std::endl << "C" << std::endl;
-  printDistributedMatrix(myRows, C);
   delete[] C;
 
   MPI_Finalize();
