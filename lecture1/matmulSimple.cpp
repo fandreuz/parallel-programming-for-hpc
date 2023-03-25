@@ -1,4 +1,9 @@
 #include "identityMatrix.hpp"
+#include <fstream>
+#include <string>
+#include <vector>
+
+void write_to_file(const std::vector<double> &, std::ofstream &);
 
 /**
  * Distributed matrix multiplication (assuming N % nProcesses == 0).
@@ -30,10 +35,16 @@ int main(int argc, char *argv[]) {
   double *C = new double[myRows * N];
   memset(C, 0, N * myRows * sizeof(double));
 
+  std::vector<double> comm_setup_times;
+  std::vector<double> comm_times;
+  std::vector<double> comp_times;
+  double checkpoint1, checkpoint2, checkpoint3;
+
   int small_square = myRows * myRows;
   double *B_send_buffer = new double[small_square];
   double *B_col_block = new double[myRows * N];
   for (int proc = 0; proc < nProcesses; ++proc) {
+    checkpoint1 = MPI_Wtime();
     for (int j = 0; j < myRows; ++j) {
       for (int row = 0; row < myRows; ++row) {
         // values in the same column are adjacent
@@ -41,9 +52,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    checkpoint2 = MPI_Wtime();
     MPI_Allgather(B_send_buffer, small_square, MPI_DOUBLE, B_col_block,
                   small_square, MPI_DOUBLE, MPI_COMM_WORLD);
 
+    checkpoint3 = MPI_Wtime();
     for (int i = 0; i < myRows; ++i) {
       for (int j = 0; j < myRows; ++j) {
         int c_idx = j + proc * myRows + i * N;
@@ -53,26 +66,49 @@ int main(int argc, char *argv[]) {
         }
       }
     }
+
+    // save times
+    comp_times.push_back(MPI_Wtime() - checkpoint3);
+    comm_times.push_back(checkpoint3 - checkpoint2);
+    comm_setup_times.push_back(checkpoint2 - checkpoint1);
   }
 
   delete[] B_send_buffer, B_col_block;
 
-  if (myRank == 0) {
-    std::cout << "A" << std::endl;
-  }
-  printDistributedMatrix(myRows, A2);
+  if (OUTPUT) {
+    if (myRank == 0) {
+      std::cout << "A" << std::endl;
+    }
+    printDistributedMatrix(myRows, A2);
 
-  if (myRank == 0) {
-    std::cout << "B" << std::endl;
-  }
-  printDistributedMatrix(myRows, B2);
+    if (myRank == 0) {
+      std::cout << "B" << std::endl;
+    }
+    printDistributedMatrix(myRows, B2);
 
-  if (myRank == 0) {
-    std::cout << "C" << std::endl;
+    if (myRank == 0) {
+      std::cout << "C" << std::endl;
+    }
+    printDistributedMatrix(myRows, C);
   }
-  printDistributedMatrix(myRows, C);
   delete[] A2, B2;
   delete[] C;
 
+  std::ofstream proc_out;
+  proc_out.open("proc" + std::to_string(myRank) + ".out");
+
+  write_to_file(comm_setup_times, proc_out);
+  write_to_file(comm_times, proc_out);
+  write_to_file(comp_times, proc_out);
+
+  proc_out.close();
+
   MPI_Finalize();
+}
+
+void write_to_file(const std::vector<double> &vec, std::ofstream &file) {
+  for (int i = 0; i < vec.size(); ++i) {
+    file << vec[i] << " ";
+  }
+  file << std::endl;
 }
