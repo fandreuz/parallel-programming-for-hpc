@@ -12,22 +12,7 @@ int main(int argc, char *argv[]) {
   int myRows;
   double *A = initIdentityMatrix(myRank, nProcesses, myRows);
 
-  if (myRank == 0) {
-    printMatrix(A, myRows);
-
-    int rest = N % nProcesses;
-    for (int proc = 1; proc < nProcesses; ++proc) {
-      if (proc == rest) {
-        myRows -= 1;
-      }
-
-      MPI_Recv(A, myRows * N, MPI_DOUBLE, proc, proc, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      printMatrix(A, myRows);
-    }
-  } else {
-    MPI_Send(A, myRows * N, MPI_DOUBLE, 0, myRank, MPI_COMM_WORLD);
-  }
+  printDistributedMatrix(myRows, A);
 
   delete[] A;
 
