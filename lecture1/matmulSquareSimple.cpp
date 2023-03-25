@@ -67,12 +67,11 @@ int main(int argc, char *argv[]) {
       double *B_block_row0 = B_col_block;
       for (int B_block_col_idx = 0; B_block_col_idx < myRows;
            ++B_block_col_idx) {
-        for (int B_proc = 0; B_proc < nProcesses; ++B_proc) {
-          double *A_loc_proc_row = A_loc_row + B_proc * myRows;
-          double *B_block_proc_row0 = B_block_row0 + B_proc * small_square;
-          for (int B_proc_row = 0; B_proc_row < myRows; ++B_proc_row) {
-            *C_write +=
-                A_loc_proc_row[B_proc_row] * B_block_proc_row0[B_proc_row];
+        for (int p = 0; p < nProcesses; ++p) {
+          double *A_loc_proc_row = A_loc_row + p * myRows;
+          double *B_block_proc_row0 = B_block_row0 + p * small_square;
+          for (int p_row = 0; p_row < myRows; ++p_row) {
+            *C_write += A_loc_proc_row[p_row] * B_block_proc_row0[p_row];
           }
         }
         ++C_write;
