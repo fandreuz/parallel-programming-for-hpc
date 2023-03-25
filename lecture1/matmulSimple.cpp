@@ -1,7 +1,7 @@
 #include "identityMatrix.hpp"
 
 /**
- * Distributed matrix multiplication (rest not taken into account).
+ * Distributed matrix multiplication (assuming N % nProcesses == 0).
  */
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   }
 
   double *A2 = scalarAddMul(1, 2, A, myRows);
-  double *B2 = scalarAddMul(0, 2, B, myRows);
+  double *B2 = scalarAddMul(5, 2, B, myRows);
   delete[] A, B;
 
   double *C = new double[myRows * N];
@@ -57,25 +57,17 @@ int main(int argc, char *argv[]) {
 
   delete[] B_send_buffer, B_col_block;
 
+  if (myRank == 0) {
+    std::cout << "A" << std::endl;
+    printDistributedMatrix(myRows, A2);
+
+    std::cout << std::endl << "B" << std::endl;
+    printDistributedMatrix(myRows, B2);
+  }
   delete[] A2, B2;
 
-  if (myRank == 0) {
-    printMatrix(C, myRows);
-
-    int rest = N % nProcesses;
-    for (int proc = 1; proc < nProcesses; ++proc) {
-      if (proc == rest) {
-        myRows -= 1;
-      }
-
-      MPI_Recv(C, myRows * N, MPI_DOUBLE, proc, proc, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      printMatrix(A, myRows);
-    }
-  } else {
-    MPI_Send(A, myRows * N, MPI_DOUBLE, 0, myRank, MPI_COMM_WORLD);
-  }
-
+  std::cout << std::endl << "C" << std::endl;
+  printDistributedMatrix(myRows, C);
   delete[] C;
 
   MPI_Finalize();
