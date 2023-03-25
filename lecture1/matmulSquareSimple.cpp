@@ -47,10 +47,10 @@ int main(int argc, char *argv[]) {
     checkpoint1 = MPI_Wtime();
     for (int B_loc_col = 0; B_loc_col < myRows; ++B_loc_col) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
-      double *B_col0 = B2 + B_loc_col + proc * myRows;
+      double *B_row0 = B2 + proc * myRows + B_loc_col;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
         // values in the same column are adjacent
-        B_send_buffer_col[B_loc_row] = B_col0[B_loc_row * N];
+        B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * N];
       }
     }
 
