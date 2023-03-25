@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
   double *B_send_buffer = new double[small_square];
   double *B_col_block = new double[myRows * N];
   double *B_row0 = B2;
+  int C_proc_col_offset = 0;
   for (int proc = 0; proc < nProcesses; ++proc) {
     checkpoint1 = MPI_Wtime();
     for (int B_loc_col = 0; B_loc_col < myRows; ++B_loc_col) {
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
         // values in the same column are adjacent
         B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * N];
       }
+      // move along B's row 0
       ++B_row0;
     }
 
@@ -60,7 +62,6 @@ int main(int argc, char *argv[]) {
                   small_square, MPI_DOUBLE, MPI_COMM_WORLD);
 
     checkpoint3 = MPI_Wtime();
-    int C_proc_col_offset = proc * myRows;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
       for (int B_block_col_idx = 0; B_block_col_idx < myRows;
            ++B_block_col_idx) {
@@ -77,6 +78,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
+    C_proc_col_offset += myRows;
 
     // save times
     comp_times.push_back(MPI_Wtime() - checkpoint3);
