@@ -2,6 +2,6 @@
 
 #include "utils.hpp"
 #include <mpi.h>
-#include <string>
+#include <cstring>
 
 double *initIdentityMatrix(int, int, int &);
