@@ -44,7 +44,6 @@ int main(int argc, char *argv[]) {
   double *B_send_buffer = new double[small_square];
   double *B_col_block = new double[myRows * N];
   double *B_row0 = B2;
-  int C_proc_col_offset = 0;
   for (int proc = 0; proc < nProcesses; ++proc) {
     checkpoint1 = MPI_Wtime();
     for (int B_loc_col = 0; B_loc_col < myRows; ++B_loc_col) {
@@ -62,9 +61,8 @@ int main(int argc, char *argv[]) {
                   small_square, MPI_DOUBLE, MPI_COMM_WORLD);
 
     checkpoint3 = MPI_Wtime();
-    int C_offset = C_proc_col_offset;
+    double *C_write = C + myRows * proc;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
-      int C_idx = C_offset;
       for (int B_block_col_idx = 0; B_block_col_idx < myRows;
            ++B_block_col_idx) {
         double *A_loc_row = A2 + A_loc_row_idx * N;
@@ -73,15 +71,14 @@ int main(int argc, char *argv[]) {
           double *A_loc_proc_row = A_loc_row + B_proc * myRows;
           double *B_block_proc_row0 = B_block_row0 + B_proc * small_square;
           for (int B_proc_row = 0; B_proc_row < myRows; ++B_proc_row) {
-            C[C_idx] +=
+            *C_write +=
                 A_loc_proc_row[B_proc_row] * B_block_proc_row0[B_proc_row];
           }
         }
-        ++C_idx;
+        ++C_write;
       }
-      C_offset += N;
+      C_write += N - myRows;
     }
-    C_proc_col_offset += myRows;
 
     // save times
     comp_times.push_back(MPI_Wtime() - checkpoint3);
