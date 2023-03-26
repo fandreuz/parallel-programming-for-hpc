@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
     }
 #elif MODE == 2
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
-                n_cols_B_sent, SIZE, 1.0, A, SIZE, B_col_block, n_cols_B_sent,
+                n_cols_B_sent, SIZE, 1.0, A2, SIZE, B_col_block, n_cols_B_sent,
                 0.0, C_write, SIZE);
 #endif
 
