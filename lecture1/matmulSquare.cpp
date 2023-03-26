@@ -52,9 +52,10 @@ int main(int argc, char *argv[]) {
   memset(C, 0, SIZE * myRows * sizeof(double));
 #endif
 
-  std::vector<double> comm_setup_times;
-  std::vector<double> comm_times;
-  std::vector<double> comp_times;
+  // 0: communication preparation
+  // 1: communication
+  // 2: computation
+  std::vector<double> times(3, 0.0);
   double checkpoint1, checkpoint2, checkpoint3;
 
   // splits[0] is the maximum number of columns of B we will ever send
@@ -157,9 +158,9 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     // save times
-    comp_times.push_back(MPI_Wtime() - checkpoint3);
-    comm_times.push_back(checkpoint3 - checkpoint2);
-    comm_setup_times.push_back(checkpoint2 - checkpoint1);
+    times[2] += MPI_Wtime() - checkpoint3;
+    times[1] += checkpoint3 - checkpoint2;
+    times[0] += checkpoint2 - checkpoint1;
   }
 
   delete[] B_send_buffer;
@@ -192,9 +193,7 @@ int main(int argc, char *argv[]) {
     std::ofstream proc_out;
     proc_out.open("proc" + std::to_string(myRank) + ".out");
 
-    write_to_file(comm_setup_times, proc_out);
-    write_to_file(comm_times, proc_out);
-    write_to_file(comp_times, proc_out);
+    write_to_file(times, proc_out);
 
     proc_out.close();
   }
