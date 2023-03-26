@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
         ++B_send_buffer_write;
         ++B_curr_col;
       }
-      B_curr_col = B_row0 + N;
+      B_curr_col = B_row0 + SIZE;
     }
     B_row0 += n_cols_B_sent;
 #endif
