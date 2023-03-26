@@ -1,14 +1,21 @@
 .DEFAULT_GOAL := compile
 
+SIZE = 100
+MODE = 0
+
 FLAGS = -std=c++17 -Wall -Wextra
 HPC_FLAGS = -O3 -march=native
 COMPILER = mpic++
 UTILITIES = identityMatrix.cpp utils.cpp
 SRC = matmulSquare.cpp
 
-SIZE = 100
+ifeq "$(MODE)" "2"
+OPENBLAS_FLAGS = -I ${OPENBLAS_HOME}/include/ -L ${OPENBLAS_HOME}/lib -lopenblas -lgfortran
+else
+OPENBLAS_FLAGS =
+endif
 
 compile:
-	$(COMPILER) $(FLAGS) $(HPC_FLAGS) -D SIZE=${SIZE} $(UTILITIES) $(SRC)
+	$(COMPILER) $(FLAGS) $(OPENBLAS_FLAGS) $(HPC_FLAGS) -D SIZE=${SIZE} -D MODE=${MODE} $(UTILITIES) $(SRC)
 output:
-	$(COMPILER) $(FLAGS) $(HPC_FLAGS) -D SIZE=${SIZE} -D OUTPUT $(UTILITIES) $(SRC)
+	$(COMPILER) $(FLAGS) $(OPENBLAS_FLAGS) $(HPC_FLAGS) -D SIZE=${SIZE} -D MODE=${MODE} -D OUTPUT $(UTILITIES) $(SRC)

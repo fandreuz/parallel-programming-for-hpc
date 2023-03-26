@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 
+#if MODE == 2
+#include <cblas.h>
+#endif
+
 void write_to_file(const std::vector<double> &, std::ofstream &);
 
 /**
@@ -43,7 +47,10 @@ int main(int argc, char *argv[]) {
   delete[] B;
 
   double *C = new double[myRows * SIZE];
+#if MODE != 2
+  // no need to initialize to zero with DGEMM
   memset(C, 0, SIZE * myRows * sizeof(double));
+#endif
 
   std::vector<double> comm_setup_times;
   std::vector<double> comm_times;
@@ -67,22 +74,43 @@ int main(int argc, char *argv[]) {
     }
 
     checkpoint1 = MPI_Wtime();
+
+#if MODE == 0
+    // Neither row nor col-major order, values in the same column within a
+    // single process, and are scattered in small segments when Allgatherv is
+    // called.
     for (int B_loc_col = 0; B_loc_col < n_cols_B_sent; ++B_loc_col) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
-        // values in the same column are adjacent
         B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * SIZE];
       }
       // move along B's row 0
       ++B_row0;
     }
+#else
+    // row-major order
+    for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
+      double *B_curr_col = B_row0;
+      double *B_send_buffer_write = B_send_buffer;
+      for (int B_loc_col = 0; B_loc_col < n_cols_B_sent; ++B_loc_col) {
+        *B_send_buffer_write = *B_curr_col;
+
+        ++B_send_buffer_write;
+        ++B_curr_col;
+      }
+      B_curr_col = B_row0 + N;
+    }
+    B_row0 += n_cols_B_sent;
+#endif
 
     checkpoint2 = MPI_Wtime();
     MPI_Allgatherv(B_send_buffer, myRows * n_cols_B_sent, MPI_DOUBLE,
                    B_col_block, recv_count, displ, MPI_DOUBLE, MPI_COMM_WORLD);
 
     checkpoint3 = MPI_Wtime();
+    // find top-left corner of the block of C we're writing
     double *C_write = C + shifted_cumsum_splits[proc];
+#if MODE == 0
     double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
       for (int B_block_col_idx = 0; B_block_col_idx < n_cols_B_sent;
@@ -100,6 +128,11 @@ int main(int argc, char *argv[]) {
       C_write += SIZE - n_cols_B_sent;
       A_loc_row += SIZE;
     }
+#elif MODE == 2
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
+                n_cols_B_sent, SIZE, 1.0, A, SIZE, B_col_block, n_cols_B_sent,
+                0.0, C_write, SIZE);
+#endif
 
     // save times
     comp_times.push_back(MPI_Wtime() - checkpoint3);
@@ -112,23 +145,22 @@ int main(int argc, char *argv[]) {
   delete[] splits;
   delete[] shifted_cumsum_splits;
 
-  #ifdef OUTPUT
-    if (myRank == 0) {
-      std::cout << "A" << std::endl;
-    }
-    printDistributedMatrix(myRows, A2);
-
-    if (myRank == 0) {
-      std::cout << "B" << std::endl;
-    }
-    printDistributedMatrix(myRows, B2);
-
-    if (myRank == 0) {
-      std::cout << "C" << std::endl;
-    }
-    printDistributedMatrix(myRows, C);
+#ifdef OUTPUT
+  if (myRank == 0) {
+    std::cout << "A" << std::endl;
   }
-  #endif
+  printDistributedMatrix(myRows, A2);
+
+  if (myRank == 0) {
+    std::cout << "B" << std::endl;
+  }
+  printDistributedMatrix(myRows, B2);
+
+  if (myRank == 0) {
+    std::cout << "C" << std::endl;
+  }
+  printDistributedMatrix(myRows, C);
+#endif
 
   delete[] A2;
   delete[] B2;
