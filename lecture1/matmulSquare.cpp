@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   delete[] splits;
   delete[] shifted_cumsum_splits;
 
-  if (OUTPUT) {
+  #ifdef OUTPUT
     if (myRank == 0) {
       std::cout << "A" << std::endl;
     }
@@ -131,6 +131,8 @@ int main(int argc, char *argv[]) {
     }
     printDistributedMatrix(myRows, C);
   }
+  #endif
+  
   delete[] A2;
   delete[] B2;
   delete[] C;

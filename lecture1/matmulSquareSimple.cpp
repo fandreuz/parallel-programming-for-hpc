@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
   delete[] B_send_buffer;
   delete[] B_col_block;
 
-  if (OUTPUT) {
+  #ifdef OUTPUT
     if (myRank == 0) {
       std::cout << "A" << std::endl;
     }
@@ -107,6 +107,8 @@ int main(int argc, char *argv[]) {
     }
     printDistributedMatrix(myRows, C);
   }
+  #endif
+  
   delete[] A2;
   delete[] B2;
   delete[] C;
