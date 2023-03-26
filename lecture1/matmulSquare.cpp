@@ -18,7 +18,9 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
-  openblas_set_num_threads(1)
+#if MODE == 2
+  openblas_set_num_threads(1);
+#endif
 
   int myRows;
   double *A = initIdentityMatrix(myRank, nProcesses, myRows);
@@ -112,6 +114,7 @@ int main(int argc, char *argv[]) {
     checkpoint3 = MPI_Wtime();
     // find top-left corner of the block of C we're writing
     double *C_write = C + shifted_cumsum_splits[proc];
+
 #if MODE == 0
     double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
@@ -120,19 +123,31 @@ int main(int argc, char *argv[]) {
         for (int p = 0; p < nProcesses; ++p) {
           double *A_loc_proc_row = A_loc_row + shifted_cumsum_splits[p];
           double *B_col_block_p =
-              B_col_block + B_block_col_idx * splits[p] + displ[p];
-          for (int p_row = 0; p_row < splits[p]; ++p_row) {
+              B_col_block + B_block_col_idx * n_cols_B_sent + displ[p];
+          for (int p_row = 0; p_row < n_cols_B_sent; ++p_row) {
             *C_write += A_loc_proc_row[p_row] * B_col_block_p[p_row];
           }
         }
         ++C_write;
       }
+      // jump to the next line
       C_write += SIZE - n_cols_B_sent;
       A_loc_row += SIZE;
     }
-#elif MODE == 1
-    if (myRank == 0) {
-      std::cout << "Not implemented yet" << std::endl;
+#elif MODE == 1 // row-major
+    for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
+      double *A_row = A2 + A_loc_row_idx * SIZE;
+      double *B_col_row0 = B_col_block;
+      for (int B_block_col_idx = 0; B_block_col_idx < n_cols_B_sent;
+           ++B_block_col_idx) {
+        for (int k = 0, kB = 0; k < SIZE; ++k, kB += n_cols_B_sent) {
+          *C_write += A_row[k] * B_col_row0[kB];
+        }
+        ++C_write;
+        ++B_col_row0;
+      }
+      // jump to the next line
+      C_write += SIZE - n_cols_B_sent;
     }
 #elif MODE == 2
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
