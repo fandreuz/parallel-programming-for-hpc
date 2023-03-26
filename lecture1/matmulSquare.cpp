@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
   double *B_send_buffer = new double[myRows * splits[0]];
   double *B_col_block = new double[N * splits[0]];
   double *B_row0 = B2;
-  int C_proc_col_offset = 0;
   for (int proc = 0; proc < nProcesses; ++proc) {
     int n_cols_B_sent = splits[proc];
     int *recv_count = new int[nProcesses];
@@ -149,7 +148,7 @@ int main(int argc, char *argv[]) {
 }
 
 void write_to_file(const std::vector<double> &vec, std::ofstream &file) {
-  for (int i = 0; i < vec.size(); ++i) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
     file << vec[i] << " ";
   }
   file << std::endl;
