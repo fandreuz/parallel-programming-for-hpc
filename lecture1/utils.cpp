@@ -2,8 +2,8 @@
 
 void printMatrix(double *A, int nLoc) {
   for (int i = 0; i < nLoc; ++i) {
-    for (int j = 0; j < N; ++j) {
-      std::cout << A[j + i * N] << " ";
+    for (int j = 0; j < SIZE; ++j) {
+      std::cout << A[j + i * SIZE] << " ";
     }
     std::cout << std::endl;
   }
@@ -17,26 +17,26 @@ void printDistributedMatrix(int myRows, double *C) {
   if (myRank == 0) {
     printMatrix(C, myRows);
 
-    int rest = N % nProcesses;
+    int rest = SIZE % nProcesses;
     for (int proc = 1; proc < nProcesses; ++proc) {
       if (proc == rest) {
         myRows -= 1;
       }
 
-      MPI_Recv(C, myRows * N, MPI_DOUBLE, proc, proc, MPI_COMM_WORLD,
+      MPI_Recv(C, myRows * SIZE, MPI_DOUBLE, proc, proc, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
       printMatrix(C, myRows);
     }
   } else {
-    MPI_Send(C, myRows * N, MPI_DOUBLE, 0, myRank, MPI_COMM_WORLD);
+    MPI_Send(C, myRows * SIZE, MPI_DOUBLE, 0, myRank, MPI_COMM_WORLD);
   }
 }
 
 double *scalarAddMul(double add, double mul, double *A, int nRows) {
-  double *result = new double[nRows * N];
+  double *result = new double[nRows * SIZE];
 
   for (int i = 0; i < nRows; ++i) {
-    for (int idx = i * N; idx < (i + 1) * N; ++idx) {
+    for (int idx = i * SIZE; idx < (i + 1) * SIZE; ++idx) {
       result[idx] = mul * A[idx] + add;
     }
   }

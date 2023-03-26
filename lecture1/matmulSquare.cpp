@@ -23,8 +23,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  int remainder = N % nProcesses;
-  int div = N / nProcesses;
+  int remainder = SIZE % nProcesses;
+  int div = SIZE / nProcesses;
 
   int *splits = new int[nProcesses];
   for (int proc = 0; proc < nProcesses; ++proc) {
@@ -42,8 +42,8 @@ int main(int argc, char *argv[]) {
   delete[] A;
   delete[] B;
 
-  double *C = new double[myRows * N];
-  memset(C, 0, N * myRows * sizeof(double));
+  double *C = new double[myRows * SIZE];
+  memset(C, 0, SIZE * myRows * sizeof(double));
 
   std::vector<double> comm_setup_times;
   std::vector<double> comm_times;
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
   // splits[0] is the maximum number of columns of B we will ever send
   double *B_send_buffer = new double[myRows * splits[0]];
-  double *B_col_block = new double[N * splits[0]];
+  double *B_col_block = new double[SIZE * splits[0]];
   double *B_row0 = B2;
   for (int proc = 0; proc < nProcesses; ++proc) {
     int n_cols_B_sent = splits[proc];
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
         // values in the same column are adjacent
-        B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * N];
+        B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * SIZE];
       }
       // move along B's row 0
       ++B_row0;
@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
         }
         ++C_write;
       }
-      C_write += N - n_cols_B_sent;
-      A_loc_row += N;
+      C_write += SIZE - n_cols_B_sent;
+      A_loc_row += SIZE;
     }
 
     // save times

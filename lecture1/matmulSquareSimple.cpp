@@ -6,7 +6,7 @@
 void write_to_file(const std::vector<double> &, std::ofstream &);
 
 /**
- * Distributed matrix multiplication (assuming N % nProcesses == 0).
+ * Distributed matrix multiplication (assuming SIZE % nProcesses == 0).
  */
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
-  if (N % nProcesses != 0) {
+  if (SIZE % nProcesses != 0) {
     std::cerr << "Remainder is not zero" << std::endl;
     return 1;
   }
@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
   delete[] A;
   delete[] B;
 
-  double *C = new double[myRows * N];
-  memset(C, 0, N * myRows * sizeof(double));
+  double *C = new double[myRows * SIZE];
+  memset(C, 0, SIZE * myRows * sizeof(double));
 
   std::vector<double> comm_setup_times;
   std::vector<double> comm_times;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
   int small_square = myRows * myRows;
   double *B_send_buffer = new double[small_square];
-  double *B_col_block = new double[myRows * N];
+  double *B_col_block = new double[myRows * SIZE];
   double *B_row0 = B2;
   for (int proc = 0; proc < nProcesses; ++proc) {
     checkpoint1 = MPI_Wtime();
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
       double *B_send_buffer_col = B_send_buffer + B_loc_col * myRows;
       for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
         // values in the same column are adjacent
-        B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * N];
+        B_send_buffer_col[B_loc_row] = B_row0[B_loc_row * SIZE];
       }
       // move along B's row 0
       ++B_row0;
@@ -78,8 +78,8 @@ int main(int argc, char *argv[]) {
         ++C_write;
         B_block_row0 += myRows;
       }
-      C_write += N - myRows;
-      A_loc_row += N;
+      C_write += SIZE - myRows;
+      A_loc_row += SIZE;
     }
 
     // save times
