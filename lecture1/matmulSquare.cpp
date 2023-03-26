@@ -95,9 +95,6 @@ int main(int argc, char *argv[]) {
             *C_write += A_loc_proc_row[p_row] * B_col_block_p[p_row];
           }
         }
-        if (myRank == 0) {
-          std::cout << std::endl << std::endl;
-        }
         ++C_write;
       }
       C_write += SIZE - n_cols_B_sent;
@@ -132,7 +129,7 @@ int main(int argc, char *argv[]) {
     printDistributedMatrix(myRows, C);
   }
   #endif
-  
+
   delete[] A2;
   delete[] B2;
   delete[] C;
