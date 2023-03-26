@@ -1,13 +1,9 @@
 #include "identityMatrix.hpp"
-#include <fstream>
 #include <string>
-#include <vector>
 
 #if MODE == 2
 #include <cblas.h>
 #endif
-
-void write_to_file(const std::vector<double> &, std::ofstream &);
 
 /**
  * Distributed matrix multiplication.
@@ -197,11 +193,4 @@ int main(int argc, char *argv[]) {
   proc_out.close();
 
   MPI_Finalize();
-}
-
-void write_to_file(const std::vector<double> &vec, std::ofstream &file) {
-  for (std::size_t i = 0; i < vec.size(); ++i) {
-    file << vec[i] << " ";
-  }
-  file << std::endl;
 }

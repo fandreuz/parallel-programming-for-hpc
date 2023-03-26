@@ -43,3 +43,10 @@ double *scalarAddMul(double add, double mul, double *A, int nRows) {
 
   return result;
 }
+
+void write_to_file(const std::vector<double> &vec, std::ofstream &file) {
+  for (std::size_t i = 0; i < vec.size(); ++i) {
+    file << vec[i] << " ";
+  }
+  file << std::endl;
+}
