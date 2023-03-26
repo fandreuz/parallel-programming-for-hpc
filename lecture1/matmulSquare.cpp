@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
   double *B_send_buffer = new double[myRows * splits[0]];
   double *B_col_block = new double[SIZE * splits[0]];
   double *B_row0 = B2;
+
   for (int proc = 0; proc < nProcesses; ++proc) {
     int n_cols_B_sent = splits[proc];
     int *recv_count = new int[nProcesses];
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]) {
       displ[p] = displ[p - 1] + recv_count[p - 1];
     }
 
+    MPI_Barrier(MPI_COMM_WORLD);
     checkpoint1 = MPI_Wtime();
 
 #if MODE == 0
@@ -103,10 +105,12 @@ int main(int argc, char *argv[]) {
     B_row0 += n_cols_B_sent;
 #endif
 
+    MPI_Barrier(MPI_COMM_WORLD);
     checkpoint2 = MPI_Wtime();
     MPI_Allgatherv(B_send_buffer, myRows * n_cols_B_sent, MPI_DOUBLE,
                    B_col_block, recv_count, displ, MPI_DOUBLE, MPI_COMM_WORLD);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     checkpoint3 = MPI_Wtime();
     // find top-left corner of the block of C we're writing
     double *C_write = C + shifted_cumsum_splits[proc];
@@ -151,6 +155,7 @@ int main(int argc, char *argv[]) {
                 0.0, C_write, SIZE);
 #endif
 
+    MPI_Barrier(MPI_COMM_WORLD);
     // save times
     comp_times.push_back(MPI_Wtime() - checkpoint3);
     comm_times.push_back(checkpoint3 - checkpoint2);
@@ -183,14 +188,16 @@ int main(int argc, char *argv[]) {
   delete[] B2;
   delete[] C;
 
-  std::ofstream proc_out;
-  proc_out.open("proc" + std::to_string(myRank) + ".out");
+  if (myRank == 0) {
+    std::ofstream proc_out;
+    proc_out.open("proc" + std::to_string(myRank) + ".out");
 
-  write_to_file(comm_setup_times, proc_out);
-  write_to_file(comm_times, proc_out);
-  write_to_file(comp_times, proc_out);
+    write_to_file(comm_setup_times, proc_out);
+    write_to_file(comm_times, proc_out);
+    write_to_file(comp_times, proc_out);
 
-  proc_out.close();
+    proc_out.close();
+  }
 
   MPI_Finalize();
 }
