@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 
   double *A2 = scalarAddMul(1, 2, A, myRows);
   double *B2 = scalarAddMul(5, 2, B, myRows);
-  delete[] A, B;
+  delete[] A;
+  delete[] B;
 
   double *C = new double[myRows * N];
   memset(C, 0, N * myRows * sizeof(double));
@@ -87,7 +88,8 @@ int main(int argc, char *argv[]) {
     comm_setup_times.push_back(checkpoint2 - checkpoint1);
   }
 
-  delete[] B_send_buffer, B_col_block;
+  delete[] B_send_buffer;
+  delete[] B_col_block;
 
   if (OUTPUT) {
     if (myRank == 0) {
@@ -105,7 +107,8 @@ int main(int argc, char *argv[]) {
     }
     printDistributedMatrix(myRows, C);
   }
-  delete[] A2, B2;
+  delete[] A2;
+  delete[] B2;
   delete[] C;
 
   std::ofstream proc_out;
