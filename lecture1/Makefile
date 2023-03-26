@@ -3,7 +3,7 @@
 SIZE = 100
 MODE = 0
 
-FLAGS = -std=c++17 -Wall -Wextra
+FLAGS = -Wall -Wextra
 HPC_FLAGS = -O3
 COMPILER = mpic++
 UTILITIES = identityMatrix.cpp utils.cpp
