@@ -89,16 +89,16 @@ int main(int argc, char *argv[]) {
     }
 #else
     // row-major order
+    double *B_ptr = B_row0;
+    double *B_send_buffer_write = B_send_buffer;
     for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
-      double *B_curr_col = B_row0;
-      double *B_send_buffer_write = B_send_buffer;
       for (int B_loc_col = 0; B_loc_col < n_cols_B_sent; ++B_loc_col) {
-        *B_send_buffer_write = *B_curr_col;
+        *B_send_buffer_write = *B_ptr;
 
         ++B_send_buffer_write;
-        ++B_curr_col;
+        ++B_ptr;
       }
-      B_curr_col = B_row0 + SIZE;
+      B_ptr = B_row0 + (B_loc_row + 1) * SIZE;
     }
     B_row0 += n_cols_B_sent;
 #endif
@@ -127,6 +127,10 @@ int main(int argc, char *argv[]) {
       }
       C_write += SIZE - n_cols_B_sent;
       A_loc_row += SIZE;
+    }
+#elif MODE == 1
+    if (myRank == 0) {
+      std::cout << "Not implemented yet" << std::endl;
     }
 #elif MODE == 2
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
