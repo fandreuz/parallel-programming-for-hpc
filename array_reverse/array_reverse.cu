@@ -1,5 +1,3 @@
-#define N 100
-#define THREADS_PER_BLOCK 10
 #include "stdio.h"
 
 __global__ void array_reverse(int *a, int *aR) {

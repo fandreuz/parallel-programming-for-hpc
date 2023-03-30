@@ -1,4 +1,3 @@
-#define N 10
 #include "stdio.h"
 
 // each block takes care of a row of the transposed matrix
@@ -36,7 +35,7 @@ int main(void) {
   int *dev_aT;
   cudaMalloc((void **)&dev_aT, array_memory_size);
 
-  tranpose_kernel<<<N, N>>>(dev_a, dev_aT);
+  tranpose_kernel<<<N, THREADS_PER_BLOCK>>>(dev_a, dev_aT);
 
   cudaMemcpy(a, dev_aT, array_memory_size, cudaMemcpyDeviceToHost);
 
