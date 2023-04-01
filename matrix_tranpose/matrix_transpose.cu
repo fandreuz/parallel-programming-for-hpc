@@ -1,10 +1,15 @@
 #include "stdio.h"
 
 // each block takes care of a row of the transposed matrix
-__global__ void tranpose_kernel(int *a, int *aT) {
-  int aT_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  int a_idx = threadIdx.x * gridDim.x + blockIdx.x;
-  aT[aT_idx] = a[a_idx];
+__global__ void tranpose_kernel(int *a) {
+  int idx = threadIdx.x + blockIdx.x * blockDim.x;
+  int i = idx / N;
+  int j = idx % N;
+  if (i < j) {
+    int temp = a[i * N + j];
+    a[i * N + j] = a[j * N + i];
+    a[j * N + i] = temp;
+  }
 }
 
 int main(void) {
@@ -31,13 +36,9 @@ int main(void) {
   int *dev_a;
   cudaMalloc((void **)&dev_a, array_memory_size);
   cudaMemcpy(dev_a, a, array_memory_size, cudaMemcpyHostToDevice);
+  tranpose_kernel<<<N * N / THREADS_PER_BLOCK + 1, THREADS_PER_BLOCK>>>(dev_a);
 
-  int *dev_aT;
-  cudaMalloc((void **)&dev_aT, array_memory_size);
-
-  tranpose_kernel<<<N, THREADS_PER_BLOCK>>>(dev_a, dev_aT);
-
-  cudaMemcpy(a, dev_aT, array_memory_size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(a, dev_a, array_memory_size, cudaMemcpyDeviceToHost);
 
 #ifdef DEBUG
   printf("Output:\n");
@@ -50,8 +51,6 @@ int main(void) {
 #endif
 
   cudaFree(dev_a);
-  cudaFree(dev_aT);
-
   free(a);
 
   return 0;
