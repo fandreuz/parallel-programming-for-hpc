@@ -96,10 +96,7 @@ int main(int argc, char *argv[]) {
     double *B_send_buffer_write = B_send_buffer;
     for (int B_loc_row = 0; B_loc_row < myRows; ++B_loc_row) {
       for (int B_loc_col = 0; B_loc_col < n_cols_B_sent; ++B_loc_col) {
-        *B_send_buffer_write = *B_ptr;
-
-        ++B_send_buffer_write;
-        ++B_ptr;
+        *B_send_buffer_write++ = *B_ptr++;
       }
       B_ptr = B_row0 + (B_loc_row + 1) * SIZE;
     }
