@@ -5,6 +5,11 @@
 #include <cblas.h>
 #endif
 
+/**
+ * A is mem-copied immediately to the device, B is moved as soon as we get a
+ * columns block. We allocate immediately space on the device for the full C,
+ * and we mem-copy C to the host after the whole computation.
+ */
 #ifdef CUDACC
 #include <cublas_v2.h>
 #endif
