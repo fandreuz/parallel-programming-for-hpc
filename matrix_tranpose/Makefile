@@ -10,5 +10,5 @@ SRC = matrix_transpose.cu
 
 compile:
 	$(COMPILER) $(HPC_FLAGS) $(PARAMETERS) $(SRC)
-output:
-	$(COMPILER) $(HPC_FLAGS) $(PARAMETERS) -D OUTPUT $(SRC)
+debug:
+	$(COMPILER) $(HPC_FLAGS) $(PARAMETERS) -D DEBUG $(SRC)
