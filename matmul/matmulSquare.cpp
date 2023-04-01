@@ -5,6 +5,10 @@
 #include <cblas.h>
 #endif
 
+#ifdef CUDACC
+#include <cublas_v2.h>
+#endif
+
 /**
  * Distributed matrix multiplication.
  */
@@ -47,9 +51,23 @@ int main(int argc, char *argv[]) {
   delete[] B;
 
   double *C = new double[myRows * SIZE];
-#if MODE != 2
-  // no need to initialize to zero with DGEMM
-  memset(C, 0, SIZE * myRows * sizeof(double));
+#if !defined(CUDACC)                                                           \
+        MODE != 2 // no need to initialize to zero with DGEMM or CUDA
+  memset(C, 0, myRows * SIZE * sizeof(double));
+#endif
+
+#ifdef CUDACC // load A in the accelerator and initialize the cublas context
+  auto cublas_handle = cublasCreate();
+  double *dev_a;
+  int a_memory_size = myRows * SIZE * sizeof(double);
+  cudaMalloc((void **)&dev_a, a_memory_size);
+  cudaMemcpy(dev_a, a, a_memory_size, cudaMemcpyHostToDevice);
+
+  double *dev_b;
+  cudaMalloc((void **)&dev_b, SIZE * splits[0] * sizeof(double));
+
+  double *dev_c;
+  cudaMalloc((void **)&dev_c, myRows * SIZE * sizeof(double));
 #endif
 
   // 0: communication preparation
@@ -110,9 +128,28 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     checkpoint3 = MPI_Wtime();
-    // find top-left corner of the block of C we're writing
-    double *C_write = C + shifted_cumsum_splits[proc];
 
+// find top-left corner of the block of C we're writing
+#ifdef CUDACC
+    double *C_write = dev_c + shifted_cumsum_splits[proc];
+    cudaMemcpy(dev_b, B_col_block, SIZE * n_cols_B_sent * sizeof(double),
+               cudaMemcpyHostToDevice);
+#else
+    double *C_write = C + shifted_cumsum_splits[proc];
+#endif
+
+#ifdef CUDACC
+#if MODE != 0
+    double alpha = 1.0;
+    double beta = 0.0;
+    cublasDgemm(CblasRowMajor, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent,
+                SIZE, &alpha, dev_a, SIZE, dev_b, n_cols_B_sent, &beta, C_write,
+                SIZE);
+#else
+    std::cout << "Error! Row-major order required" << std::endl;
+    return 1;
+#endif
+#else
 #if MODE == 0
     double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
@@ -152,6 +189,7 @@ int main(int argc, char *argv[]) {
                 n_cols_B_sent, SIZE, 1.0, A2, SIZE, B_col_block, n_cols_B_sent,
                 0.0, C_write, SIZE);
 #endif
+#endif
 
     MPI_Barrier(MPI_COMM_WORLD);
     // save times
@@ -164,6 +202,10 @@ int main(int argc, char *argv[]) {
   delete[] B_col_block;
   delete[] splits;
   delete[] shifted_cumsum_splits;
+
+#ifdef CUDACC
+  cudaMemcpy(C, dev_c, myRows * SIZE * sizeof(double), cudaMemcpyDeviceToHost);
+#endif
 
 #ifdef OUTPUT
   if (myRank == 0) {
@@ -194,6 +236,10 @@ int main(int argc, char *argv[]) {
 
     proc_out.close();
   }
+
+#ifdef CUDACC
+  cublasDestroy(cublas_handle);
+#endif
 
   MPI_Finalize();
 }
