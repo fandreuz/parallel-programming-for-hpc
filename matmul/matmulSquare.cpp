@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
   double *dev_a;
   int a_memory_size = myRows * SIZE * sizeof(double);
   cudaMalloc((void **)&dev_a, a_memory_size);
-  cudaMemcpy(dev_a, a, a_memory_size, cudaMemcpyHostToDevice);
+  cudaMemcpy(dev_a, A2, a_memory_size, cudaMemcpyHostToDevice);
 
   double *dev_b;
   cudaMalloc((void **)&dev_b, SIZE * splits[0] * sizeof(double));
