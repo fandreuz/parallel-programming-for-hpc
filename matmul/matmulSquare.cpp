@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
   cudaFree(dev_a);
   cudaFree(dev_b);
   cudaFree(dev_c);
-  cublasDestroy(cublas_handle);
+  cublasDestroy(handle);
 #endif
 
   MPI_Finalize();
