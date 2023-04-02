@@ -2,6 +2,8 @@
 #include <string>
 
 #if MODE == 2
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <cblas.h>
 #endif
 
@@ -64,7 +66,7 @@ int main(int argc, char *argv[]) {
 #if MODE == 3 // load A in the accelerator and initialize the cublas context
   cublasHandle_t handle;
   cublasCreate(&handle);
-  
+
   double *dev_a;
   int a_memory_size = myRows * SIZE * sizeof(double);
   cudaMalloc((void **)&dev_a, a_memory_size);
