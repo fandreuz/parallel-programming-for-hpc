@@ -7,7 +7,7 @@ FLAGS = -Wall -Wextra
 HPC_FLAGS = -O3
 COMPILER = mpic++
 UTILITIES = identityMatrix.cpp utils.cpp
-SRC = matmulSquare.cpp
+SRC = matmulSquareDistributed.cpp
 
 ifeq "$(MODE)" "2"
 OPENBLAS_FLAGS = -I ${OPENBLAS_HOME}/include/ -L ${OPENBLAS_HOME}/lib -lopenblas -lgfortran
