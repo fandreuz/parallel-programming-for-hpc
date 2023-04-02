@@ -62,7 +62,9 @@ int main(int argc, char *argv[]) {
 #endif
 
 #if MODE == 3 // load A in the accelerator and initialize the cublas context
-  auto cublas_handle = cublasCreate();
+  cublasHandle_t handle;
+  cublasCreate(&handle);
+  
   double *dev_a;
   int a_memory_size = myRows * SIZE * sizeof(double);
   cudaMalloc((void **)&dev_a, a_memory_size);
