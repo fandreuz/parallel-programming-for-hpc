@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
   delete[] B;
 
   double *C = new double[myRows * SIZE];
-#if !defined(CUDACC)                                                           \
-        MODE != 2 // no need to initialize to zero with DGEMM or CUDA
+#if !defined(CUDACC) &&                                                        \
+    MODE != 2 // no need to initialize to zero with DGEMM or CUDA
   memset(C, 0, myRows * SIZE * sizeof(double));
 #endif
 
@@ -144,18 +144,12 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef CUDACC
-#if MODE != 0
     double alpha = 1.0;
     double beta = 0.0;
     cublasDgemm(CblasRowMajor, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent,
                 SIZE, &alpha, dev_a, SIZE, dev_b, n_cols_B_sent, &beta, C_write,
                 SIZE);
-#else
-    std::cout << "Error! Row-major order required" << std::endl;
-    return 1;
-#endif
-#else
-#if MODE == 0
+#elif MODE == 0
     double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
       for (int B_block_col_idx = 0; B_block_col_idx < n_cols_B_sent;
@@ -193,7 +187,6 @@ int main(int argc, char *argv[]) {
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
                 n_cols_B_sent, SIZE, 1.0, A2, SIZE, B_col_block, n_cols_B_sent,
                 0.0, C_write, SIZE);
-#endif
 #endif
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -243,6 +236,9 @@ int main(int argc, char *argv[]) {
   }
 
 #ifdef CUDACC
+  cudaFree(dev_a);
+  cudaFree(dev_b);
+  cudaFree(dev_c);
   cublasDestroy(cublas_handle);
 #endif
 
