@@ -2,9 +2,9 @@
 #include <string>
 
 #if MODE == 2
+#include <cblas.h>
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#include <cblas.h>
 #endif
 
 /**
@@ -147,13 +147,7 @@ int main(int argc, char *argv[]) {
     double *C_write = C + shifted_cumsum_splits[proc];
 #endif
 
-#if MODE == 3
-    double alpha = 1.0;
-    double beta = 0.0;
-    cublasDgemm(CblasRowMajor, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent,
-                SIZE, &alpha, dev_a, SIZE, dev_b, n_cols_B_sent, &beta, C_write,
-                SIZE);
-#elif MODE == 0
+#if MODE == 0
     double *A_loc_row = A2;
     for (int A_loc_row_idx = 0; A_loc_row_idx < myRows; ++A_loc_row_idx) {
       for (int B_block_col_idx = 0; B_block_col_idx < n_cols_B_sent;
@@ -191,6 +185,14 @@ int main(int argc, char *argv[]) {
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, myRows,
                 n_cols_B_sent, SIZE, 1.0, A2, SIZE, B_col_block, n_cols_B_sent,
                 0.0, C_write, SIZE);
+#elif MODE == 3
+    double alpha = 1.0;
+    double beta = 0.0;
+    cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent, SIZE,
+                &alpha, dev_a, SIZE, dev_b, n_cols_B_sent, &beta, C_write,
+                SIZE);
+#else
+    std::cout << "Invalid mode!" << std::endl;
 #endif
 
     MPI_Barrier(MPI_COMM_WORLD);
