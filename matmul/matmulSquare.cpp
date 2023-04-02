@@ -10,7 +10,7 @@
  * columns block. We allocate immediately space on the device for the full C,
  * and we mem-copy C to the host after the whole computation.
  */
-#ifdef CUDACC
+#if MODE == 3
 #include <cublas_v2.h>
 #endif
 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   memset(C, 0, myRows * SIZE * sizeof(double));
 #endif
 
-#ifdef CUDACC // load A in the accelerator and initialize the cublas context
+#if MODE == 3 // load A in the accelerator and initialize the cublas context
   auto cublas_handle = cublasCreate();
   double *dev_a;
   int a_memory_size = myRows * SIZE * sizeof(double);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
     checkpoint3 = MPI_Wtime();
 
 // find top-left corner of the block of C we're writing
-#ifdef CUDACC
+#if MODE == 3
     double *C_write = dev_c + shifted_cumsum_splits[proc];
     cudaMemcpy(dev_b, B_col_block, SIZE * n_cols_B_sent * sizeof(double),
                cudaMemcpyHostToDevice);
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
     double *C_write = C + shifted_cumsum_splits[proc];
 #endif
 
-#ifdef CUDACC
+#if MODE == 3
     double alpha = 1.0;
     double beta = 0.0;
     cublasDgemm(CblasRowMajor, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent,
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
   delete[] splits;
   delete[] shifted_cumsum_splits;
 
-#ifdef CUDACC
+#if MODE == 3
   cudaMemcpy(C, dev_c, myRows * SIZE * sizeof(double), cudaMemcpyDeviceToHost);
 #endif
 
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
     proc_out.close();
   }
 
-#ifdef CUDACC
+#if MODE == 3
   cudaFree(dev_a);
   cudaFree(dev_b);
   cudaFree(dev_c);
