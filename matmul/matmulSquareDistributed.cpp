@@ -27,6 +27,11 @@ int main(int argc, char *argv[]) {
 
 #if MODE == 2
   openblas_set_num_threads(1);
+  #elif MODE == 3
+  int n_gpus;
+  cudaGetDeviceCount(&n_gpus);
+
+  cudaSetDevice(myRank % n_gpus);
 #endif
 
   int myRows;
