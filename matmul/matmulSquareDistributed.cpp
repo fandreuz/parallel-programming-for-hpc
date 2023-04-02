@@ -3,8 +3,6 @@
 
 #if MODE == 2
 #include <cblas.h>
-#include <cuda.h>
-#include <cuda_runtime_api.h>
 #endif
 
 /**
