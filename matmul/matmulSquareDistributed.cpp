@@ -66,9 +66,18 @@ int main(int argc, char *argv[]) {
   memset(C, 0, myRows * SIZE * sizeof(double));
 #endif
 
+  // 0: communication preparation
+  // 1: communication
+  // 2: computation
+  std::vector<double> times(3, 0.0);
+  double checkpoint1, checkpoint2, checkpoint3;
+
 #if MODE == 3 // load A in the accelerator and initialize the cublas context
   cublasHandle_t handle;
   cublasCreate(&handle);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  double gpu_comm_start = MPI_Wtime();
 
   double *dev_a;
   int a_memory_size = myRows * SIZE * sizeof(double);
@@ -80,13 +89,10 @@ int main(int argc, char *argv[]) {
 
   double *dev_c;
   cudaMalloc((void **)&dev_c, myRows * SIZE * sizeof(double));
-#endif
 
-  // 0: communication preparation
-  // 1: communication
-  // 2: computation
-  std::vector<double> times(3, 0.0);
-  double checkpoint1, checkpoint2, checkpoint3;
+  MPI_Barrier(MPI_COMM_WORLD);
+  times[1] += MPI_Wtime() - gpu_comm_start;
+#endif
 
   // splits[0] is the maximum number of columns of B we will ever send
   double *B_send_buffer = new double[myRows * splits[0]];
@@ -138,9 +144,6 @@ int main(int argc, char *argv[]) {
     MPI_Allgatherv(B_send_buffer, myRows * n_cols_B_sent, MPI_DOUBLE,
                    B_col_block, recv_count, displ, MPI_DOUBLE, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    checkpoint3 = MPI_Wtime();
-
 // find top-left corner of the block of C we're writing
 #if MODE == 3
     double *C_write = dev_c + shifted_cumsum_splits[proc];
@@ -149,6 +152,9 @@ int main(int argc, char *argv[]) {
 #else
     double *C_write = C + shifted_cumsum_splits[proc];
 #endif
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    checkpoint3 = MPI_Wtime();
 
 #if MODE == 0
     double *A_loc_row = A2;
