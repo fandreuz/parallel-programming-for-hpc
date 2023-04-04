@@ -217,7 +217,10 @@ int main(int argc, char *argv[]) {
   delete[] shifted_cumsum_splits;
 
 #if MODE == 3
+  MPI_Barrier(MPI_COMM_WORLD);
+  double gpu_comm_result_start = MPI_Wtime();
   cudaMemcpy(C, dev_c, myRows * SIZE * sizeof(double), cudaMemcpyDeviceToHost);
+  times[1] += MPI_Wtime() - gpu_comm_result_start;
 #endif
 
 #ifdef OUTPUT
