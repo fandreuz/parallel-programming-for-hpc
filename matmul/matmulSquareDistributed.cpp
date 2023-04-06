@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
 #if MODE == 2
   openblas_set_num_threads(1);
-  #elif MODE == 3
+#elif MODE == 3
   int n_gpus;
   cudaGetDeviceCount(&n_gpus);
 
@@ -69,7 +69,8 @@ int main(int argc, char *argv[]) {
   // 0: communication preparation
   // 1: communication
   // 2: computation
-  std::vector<double> times(3, 0.0);
+  // 3: GPU communication
+  std::vector<double> times(4, 0.0);
   double checkpoint1, checkpoint2, checkpoint3;
 
 #if MODE == 3 // load A in the accelerator and initialize the cublas context
@@ -91,7 +92,7 @@ int main(int argc, char *argv[]) {
   cudaMalloc((void **)&dev_c, myRows * SIZE * sizeof(double));
 
   MPI_Barrier(MPI_COMM_WORLD);
-  times[1] += MPI_Wtime() - gpu_comm_start;
+  times[3] += MPI_Wtime() - gpu_comm_start;
 #endif
 
   // splits[0] is the maximum number of columns of B we will ever send
@@ -143,18 +144,21 @@ int main(int argc, char *argv[]) {
     checkpoint2 = MPI_Wtime();
     MPI_Allgatherv(B_send_buffer, myRows * n_cols_B_sent, MPI_DOUBLE,
                    B_col_block, recv_count, displ, MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    checkpoint3 = MPI_Wtime();
 
 // find top-left corner of the block of C we're writing
 #if MODE == 3
     double *C_write = dev_c + shifted_cumsum_splits[proc];
+
+    gpu_comm_start = MPI_Wtime();
     cudaMemcpy(dev_b, B_col_block, SIZE * n_cols_B_sent * sizeof(double),
                cudaMemcpyHostToDevice);
+    MPI_Barrier(MPI_COMM_WORLD);
+    times[3] += MPI_Wtime() - gpu_comm_start;
 #else
     double *C_write = C + shifted_cumsum_splits[proc];
 #endif
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    checkpoint3 = MPI_Wtime();
 
 #if MODE == 0
     double *A_loc_row = A2;
@@ -218,9 +222,10 @@ int main(int argc, char *argv[]) {
 
 #if MODE == 3
   MPI_Barrier(MPI_COMM_WORLD);
-  double gpu_comm_result_start = MPI_Wtime();
+  gpu_comm_start = MPI_Wtime();
   cudaMemcpy(C, dev_c, myRows * SIZE * sizeof(double), cudaMemcpyDeviceToHost);
-  times[1] += MPI_Wtime() - gpu_comm_result_start;
+  MPI_Barrier(MPI_COMM_WORLD);
+  times[3] += MPI_Wtime() - gpu_comm_start;
 #endif
 
 #ifdef OUTPUT
