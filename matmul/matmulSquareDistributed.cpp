@@ -252,7 +252,7 @@ int main(int argc, char *argv[]) {
 
   if (myRank == 0) {
     std::ofstream proc_out;
-    proc_out.open("proc" + std::to_string(myRank) + ".out", std::ios_base::app);
+    proc_out.open("proc" + std::to_string(myRank) + ".out");
 
     write_to_file(times, proc_out);
 
