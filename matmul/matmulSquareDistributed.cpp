@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   // 2: computation
   // 3: GPU communication
   std::vector<double> times(4, 0.0);
-  double checkpoint1, checkpoint2, checkpoint3;
+  double checkpoint1, checkpoint2, checkpoint3, checkpoint4;
 
 #if MODE == 3 // load A in the accelerator and initialize the cublas context
   cublasHandle_t handle;
@@ -151,13 +151,13 @@ int main(int argc, char *argv[]) {
 #if MODE == 3
     double *C_write = dev_c + shifted_cumsum_splits[proc];
 
-    gpu_comm_start = MPI_Wtime();
     cudaMemcpy(dev_b, B_col_block, SIZE * n_cols_B_sent * sizeof(double),
                cudaMemcpyHostToDevice);
     MPI_Barrier(MPI_COMM_WORLD);
-    times[3] += MPI_Wtime() - gpu_comm_start;
+    checkpoint4 = MPI_Wtime();
 #else
     double *C_write = C + shifted_cumsum_splits[proc];
+    checkpoint4 = checkpoint3;
 #endif
 
 #if MODE == 0
@@ -210,7 +210,8 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     // save times
-    times[2] += MPI_Wtime() - checkpoint3;
+    times[3] += checkpoint4 - checkpoint3;
+    times[2] += MPI_Wtime() - checkpoint4;
     times[1] += checkpoint3 - checkpoint2;
     times[0] += checkpoint2 - checkpoint1;
   }
