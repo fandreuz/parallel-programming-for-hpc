@@ -201,9 +201,10 @@ int main(int argc, char *argv[]) {
 #elif MODE == 3
     double alpha = 1.0;
     double beta = 0.0;
-    cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_T, myRows, n_cols_B_sent, SIZE,
-                &alpha, dev_a, SIZE, dev_b, n_cols_B_sent, &beta, C_write,
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, n_cols_B_sent, myRows, SIZE,
+                &alpha, dev_b, n_cols_B_sent, dev_a, SIZE, &beta, C_write,
                 SIZE);
+    cudaDeviceSynchronize();
 #else
     std::cout << "Invalid mode!" << std::endl;
 #endif
