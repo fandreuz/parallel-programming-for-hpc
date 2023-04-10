@@ -80,7 +80,7 @@ plt.ylabel("Seconds")
 
 def add_label(bars, label):
 	target = bars[0]
-	plt.text(target.xy[0], target.xy[1] + target._height, label, fontsize=10)
+	plt.text(target.xy[0], target.xy[1] + 1.1 * target._height, label, fontsize=10)
 add_label(comp_line_0, "Naive")
 add_label(comp_line_2, "OpenBLAS")
 add_label(comp_line_3, "cuBLAS")
