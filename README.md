@@ -14,6 +14,10 @@ The following time measurements were taken on standard nodes on [Marconi-100](ht
 ### MatMul
 Distributed matrix multiplication ([matmul](matmul)) with MPI, BLAS and cuBLAS.
 
-| 2500x2500 | 5000x5000 |
-|---|---|
-| ![](imgs/matmul_2500.png) | ![](imgs/matmul_5000.png) |
+*2500x2500*
+
+![](imgs/matmul_2500.png)
+
+*5000x5000*
+
+![](imgs/matmul_5000.png)
