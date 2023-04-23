@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
   size_t dimension = 0, iterations = 0, row_peek = 0, col_peek = 0;
   size_t byte_dimension = 0;
 
-  if (argc != 5) {
+  if (argc != 3) {
     if (myRank == 0) {
       fprintf(stderr,
-              "\nwrong number of arguments. Usage: ./a.out dim it n m\n");
+              "\nwrong number of arguments. Usage: ./a.out dim it\n");
     }
 
     MPI_Finalize();
@@ -30,25 +30,10 @@ int main(int argc, char *argv[]) {
 
   dimension = atoi(argv[1]);
   iterations = atoi(argv[2]);
-  row_peek = atoi(argv[3]);
-  col_peek = atoi(argv[4]);
 
   if (myRank == 0) {
     printf("matrix size = %zu\n", dimension * nProcesses);
     printf("number of iterations = %zu\n", iterations);
-    printf("element for checking = Mat[%zu,%zu]\n", row_peek, col_peek);
-  }
-
-  if ((row_peek > dimension) || (col_peek > dimension)) {
-    if (myRank == 0) {
-      fprintf(stderr,
-              "Cannot Peek a matrix element outside of the matrix dimension\n");
-      fprintf(stderr, "Arguments n and m must be smaller than %zu\n",
-              dimension); /*  */
-    }
-
-    MPI_Finalize();
-    return 1;
   }
 
   double *matrix, *matrix_new;
@@ -88,8 +73,6 @@ int main(int argc, char *argv[]) {
   double t_end = MPI_Wtime();
 
   printf("\nelapsed time = %f seconds\n", t_end - t_start);
-  printf("\nmatrix[%zu,%zu] = %f\n", row_peek, col_peek,
-         matrix[(row_peek + 1) * (dimension + 2) + (col_peek + 1)]);
 
   save_gnuplot(matrix, dimension);
 
