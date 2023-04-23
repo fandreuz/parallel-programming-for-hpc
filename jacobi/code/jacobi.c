@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         i * increment;
   }
 
-  double t_start = MPI_Wtime()();
+  double t_start = MPI_Wtime();
   for (size_t it = 0; it < iterations; ++it) {
     evolve(matrix, matrix_new, dimension);
 
@@ -85,9 +85,9 @@ int main(int argc, char *argv[]) {
     matrix = matrix_new;
     matrix_new = tmp_matrix;
   }
-  double t_end = MPI_Wtime()();
+  double t_end = MPI_Wtime();
 
-  printf("\nelapsed time = %f MPI_Wtime()\n", t_end - t_start);
+  printf("\nelapsed time = %f seconds\n", t_end - t_start);
   printf("\nmatrix[%zu,%zu] = %f\n", row_peek, col_peek,
          matrix[(row_peek + 1) * (dimension + 2) + (col_peek + 1)]);
 
