@@ -62,12 +62,11 @@ int main(int argc, char *argv[]) {
   // borders
   double increment = 100.0 / (dimension + 1);
 
-  double incrementStart =
-      increment * dimension * (double)myRank / nProcesses;
+  double incrementStart = increment * dimension * (double)myRank / nProcesses;
   if (myRank > dimension % nProcesses) {
-    incrementStart += dimension % nProcesses;
+    incrementStart += (dimension % nProcesses) * increment;
   } else {
-    incrementStart += myRank;
+    incrementStart += myRank * increment;
   }
   for (size_t i = 1; i <= myRows + 1; ++i) {
     matrix[i * (dimension + 2)] = i * increment + incrementStart;
