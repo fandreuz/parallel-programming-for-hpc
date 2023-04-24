@@ -7,7 +7,7 @@
 
 void save_gnuplot(double *M, size_t dim);
 
-void evolve(double *matrix, double *matrix_new, size_t dimension);
+void evolve(double *matrix, double *matrix_new, size_t myRows, size_t dimension);
 
 int above_peer(int myRank);
 int below_peer(int myRank, int nProcesses);
@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
     printf("number of iterations = %zu\n", iterations);
   }
 
-  int myRows = dimension / nProcesses;
+  size_t myRows = dimension / nProcesses;
   myRows += myRank < dimension % nProcesses;
 
   double *matrix, *matrix_new;
 
-  byte_dimension = sizeof(double) * (dimension + 2) * (dimension + 2);
+  byte_dimension = sizeof(double) * (myRows + 2) * (dimension + 2);
   matrix = (double *)malloc(byte_dimension);
   matrix_new = (double *)malloc(byte_dimension);
 
@@ -54,19 +54,28 @@ int main(int argc, char *argv[]) {
   memset(matrix_new, 0, byte_dimension);
 
   // initial values
-  for (size_t i = 1; i <= dimension; ++i)
+  for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix[(i * (dimension + 2)) + j] = 0.5;
 
   // borders
   double increment = 100.0 / (dimension + 1);
 
+  double incrementStart = increment * dimension * (1 - (double) myRank / nProcesses);
+  if (myRank > dimension % nProcesses) {
+    incrementStart += dimension % nProcesses;
+  } else {
+    incrementStart += myRank;
+  }
+  for (size_t i = 1; i <= myRows + 1; ++i) {
+    matrix[i * (dimension + 2)] = i * increment + incrementStart;
+    matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
+  }
+
   for (size_t i = 1; i <= dimension + 1; ++i) {
-    matrix[i * (dimension + 2)] = i * increment;
-    matrix[((dimension + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+    matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
         i * increment;
-    matrix_new[i * (dimension + 2)] = i * increment;
-    matrix_new[((dimension + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+    matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
         i * increment;
   }
 
@@ -81,7 +90,7 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   double t_start = MPI_Wtime();
   for (size_t it = 0; it < iterations; ++it) {
-    evolve(matrix, matrix_new, dimension);
+    evolve(matrix, matrix_new, myRows, dimension);
 
     double *tmp_matrix = matrix;
     matrix = matrix_new;
@@ -124,8 +133,8 @@ int below_peer(int myRank, int nProcesses) {
   return myRank + 1;
 }
 
-void evolve(double *matrix, double *matrix_new, size_t dimension) {
-  for (size_t i = 1; i <= dimension; ++i)
+void evolve(double *matrix, double *matrix_new, size_t myRows, size_t dimension) {
+  for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix_new[(i * (dimension + 2)) + j] =
           (0.25) * (matrix[((i - 1) * (dimension + 2)) + j] +
