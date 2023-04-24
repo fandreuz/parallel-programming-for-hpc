@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   double increment = 100.0 / (dimension + 1);
 
   double incrementStart =
-      increment * dimension * (1 - (double)myRank / nProcesses);
+      increment * dimension * (double)myRank / nProcesses;
   if (myRank > dimension % nProcesses) {
     incrementStart += dimension % nProcesses;
   } else {
