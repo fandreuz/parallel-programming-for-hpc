@@ -7,7 +7,8 @@
 
 void save_gnuplot(double *M, size_t dim);
 
-void evolve(double *matrix, double *matrix_new, size_t myRows, size_t dimension);
+void evolve(double *matrix, double *matrix_new, size_t myRows,
+            size_t dimension);
 
 int above_peer(int myRank);
 int below_peer(int myRank, int nProcesses);
@@ -61,7 +62,8 @@ int main(int argc, char *argv[]) {
   // borders
   double increment = 100.0 / (dimension + 1);
 
-  double incrementStart = increment * dimension * (1 - (double) myRank / nProcesses);
+  double incrementStart =
+      increment * dimension * (1 - (double)myRank / nProcesses);
   if (myRank > dimension % nProcesses) {
     incrementStart += dimension % nProcesses;
   } else {
@@ -133,7 +135,8 @@ int below_peer(int myRank, int nProcesses) {
   return myRank + 1;
 }
 
-void evolve(double *matrix, double *matrix_new, size_t myRows, size_t dimension) {
+void evolve(double *matrix, double *matrix_new, size_t myRows,
+            size_t dimension) {
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix_new[(i * (dimension + 2)) + j] =
