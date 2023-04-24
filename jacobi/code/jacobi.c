@@ -5,13 +5,16 @@
 #include <sys/time.h>
 #include <time.h>
 
-void save_gnuplot(double *M, size_t dim);
+const double h = 0.1;
+
+void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dim);
 
 void evolve(double *matrix, double *matrix_new, size_t myRows,
             size_t dimension);
 
 int above_peer(int myRank);
 int below_peer(int myRank, int nProcesses);
+size_t compute_my_rows(int myRank, int dimension, int nProcesses);
 
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -42,8 +45,7 @@ int main(int argc, char *argv[]) {
     printf("number of iterations = %zu\n", iterations);
   }
 
-  size_t myRows = dimension / nProcesses;
-  myRows += myRank < dimension % nProcesses;
+  size_t myRows = compute_my_rows(myRank, dimension, nProcesses);
 
   double *matrix, *matrix_new;
 
@@ -85,7 +87,7 @@ int main(int argc, char *argv[]) {
   int recvTopIdx = 1;
   int sendTopIdx = recvTopIdx + rowSize;
 
-  int sendBottomIdx = (myRows - 2) * rowSize + 1;
+  int sendBottomIdx = myRows * rowSize + 1;
   int recvBottomIdx = sendBottomIdx + rowSize;
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -110,7 +112,32 @@ int main(int argc, char *argv[]) {
   if (myRank == 0)
     printf("\nelapsed time = %f seconds\n", t_end - t_start);
 
-  save_gnuplot(matrix, dimension);
+  if (myRank == 0) {
+    FILE *file = fopen("solution.dat", "w");
+
+    // top
+    for (size_t j = 0; j < dimension + 2; ++j)
+      fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix[j]);
+
+    save_gnuplot(file, matrix, myRows, dimension);
+
+    int procRows = myRows;
+    for (int proc = 1; proc < nProcesses; ++proc) {
+      procRows = compute_my_rows(proc, dimension, nProcesses);
+      MPI_Recv(matrix, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      save_gnuplot(file, matrix, procRows, dimension);
+    }
+
+    // bottom
+    for (size_t j = 0; j < dimension + 2; ++j)
+      fprintf(file, "%f\t%f\t%f\n", h * j, 0,
+              matrix[(procRows + 1) * (dimension + 2) + j]);
+    fclose(file);
+  } else {
+    MPI_Send(matrix, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
+             MPI_COMM_WORLD);
+  }
 
   free(matrix);
   free(matrix_new);
@@ -118,6 +145,12 @@ int main(int argc, char *argv[]) {
   MPI_Finalize();
 
   return 0;
+}
+
+size_t compute_my_rows(int myRank, int dimension, int nProcesses) {
+  size_t myRows = dimension / nProcesses;
+  myRows += myRank < dimension % nProcesses;
+  return myRows;
 }
 
 int above_peer(int myRank) {
@@ -145,16 +178,9 @@ void evolve(double *matrix, double *matrix_new, size_t myRows,
                     matrix[(i * (dimension + 2)) + (j - 1)]);
 }
 
-const double h = 0.1;
-void save_gnuplot(double *M, size_t dimension) {
-  FILE *file;
-
-  file = fopen("solution.dat", "w");
-
-  for (size_t i = 0; i < dimension + 2; ++i)
+void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dimension) {
+  for (size_t i = 1; i < myRows + 1; ++i)
     for (size_t j = 0; j < dimension + 2; ++j)
       fprintf(file, "%f\t%f\t%f\n", h * j, -h * i,
               M[(i * (dimension + 2)) + j]);
-
-  fclose(file);
 }
