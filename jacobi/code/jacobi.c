@@ -86,12 +86,21 @@ int main(int argc, char *argv[]) {
     matrix = matrix_new;
     matrix_new = tmp_matrix;
 
-    MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                 matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 1,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 2,
-                 matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 3,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (myRank % 2 == 0) {
+      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 1,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 2,
+                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 3,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    } else {
+      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 2,
+                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 3,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 1,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
   }
   double t_end = MPI_Wtime();
 
