@@ -87,18 +87,18 @@ int main(int argc, char *argv[]) {
     matrix_new = tmp_matrix;
 
     if (myRank % 2 == 0) {
-      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 1,
+      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, MPI_ANY_TAG,
+                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, MPI_ANY_TAG,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 2,
-                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 3,
+      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, MPI_ANY_TAG,
+                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, MPI_ANY_TAG,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     } else {
-      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 2,
-                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 3,
+      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, MPI_ANY_TAG,
+                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, MPI_ANY_TAG,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 1,
+      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, MPI_ANY_TAG,
+                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, MPI_ANY_TAG,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
