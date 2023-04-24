@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
   int sendBottomIdx = (myRows - 2) * rowSize + 1;
   int recvBottomIdx = sendBottomIdx + rowSize;
 
+  MPI_Barrier(MPI_COMM_WORLD);
   double t_start = MPI_Wtime();
   for (size_t it = 0; it < iterations; ++it) {
     evolve(matrix, matrix_new, dimension);
@@ -93,9 +94,11 @@ int main(int argc, char *argv[]) {
                  matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
+  MPI_Barrier(MPI_COMM_WORLD);
   double t_end = MPI_Wtime();
 
-  printf("\nelapsed time = %f seconds\n", t_end - t_start);
+  if (myRank == 0)
+    printf("\nelapsed time = %f seconds\n", t_end - t_start);
 
   save_gnuplot(matrix, dimension);
 
