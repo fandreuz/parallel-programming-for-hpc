@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   int aboveRank = above_peer(myRank);
   int belowRank = below_peer(myRank, nProcesses);
 
-  size_t dimension = 0, iterations = 0, row_peek = 0, col_peek = 0;
+  size_t dimension = 0, iterations = 0;
   size_t byte_dimension = 0;
 
   if (argc != 3) {
