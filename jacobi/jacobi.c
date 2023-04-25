@@ -64,7 +64,8 @@ int main(int argc, char *argv[]) {
     incrementStart += myRank * increment;
   }
 
-  int byte_dimension = sizeof(double) * (myRows + 2) * (dimension + 2);
+  int matrixElementsCount = (myRows + 2) * (dimension + 2);
+  int byte_dimension = sizeof(double) * matrixElementsCount;
   matrix = (double *)malloc(byte_dimension);
   matrix_new = (double *)malloc(byte_dimension);
 
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   double t_start = MPI_Wtime();
 
-#pragma acc data copy(matrix) copyin(matrix_new)
+#pragma acc data copy(matrix[0:matrixElementsCount]) copyin(matrix_new[0:matrixElementsCount])
   {
 #pragma acc parallel
     {
