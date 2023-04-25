@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 #ifdef _OPENACC
   int devtype = acc_get_device_type();
   int devNum = acc_get_num_devices(devtype);
-  int dev = local_rank % devNum;
+  int dev = myRank % devNum;
   int acc_set_device_num(dev, devtype);
 #endif
 
