@@ -92,20 +92,25 @@ int main(int argc, char *argv[]) {
 
   MPI_Barrier(MPI_COMM_WORLD);
   double t_start = MPI_Wtime();
-  for (size_t it = 0; it < iterations; ++it) {
-    evolve(matrix, matrix_new, myRows, dimension);
 
-    double *tmp_matrix = matrix;
-    matrix = matrix_new;
-    matrix_new = tmp_matrix;
+#pragma acc parallel
+  {
+    for (size_t it = 0; it < iterations; ++it) {
+      evolve(matrix, matrix_new, myRows, dimension);
 
-    MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                 matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
-                 matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      double *tmp_matrix = matrix;
+      matrix = matrix_new;
+      matrix_new = tmp_matrix;
+
+      MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                   matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
+                   matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
   }
+
   MPI_Barrier(MPI_COMM_WORLD);
   double t_end = MPI_Wtime();
 
@@ -169,6 +174,7 @@ int below_peer(int myRank, int nProcesses) {
 
 void evolve(double *matrix, double *matrix_new, size_t myRows,
             size_t dimension) {
+#pragma acc loop
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix_new[(i * (dimension + 2)) + j] =
