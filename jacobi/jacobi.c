@@ -64,43 +64,42 @@ int main(int argc, char *argv[]) {
     incrementStart += myRank * increment;
   }
 
-  int byte_dimension = (myRows + 2) * (dimension + 2);
-#pragma acc data copyout(matrix [0:byte_dimension])                            \
-    create(matrix_new [0:byte_dimension])
+  int byte_dimension = sizeof(double) * (myRows + 2) * (dimension + 2);
+  matrix = (double *)malloc(byte_dimension);
+  matrix_new = (double *)malloc(byte_dimension);
+
+  memset(matrix, 0, byte_dimension);
+  memset(matrix_new, 0, byte_dimension);
+
+  for (size_t i = 1; i <= myRows; ++i)
+    for (size_t j = 1; j <= dimension; ++j)
+      matrix[(i * (dimension + 2)) + j] = 0.5;
+
+  for (size_t i = 1; i <= myRows + 1; ++i) {
+    matrix[i * (dimension + 2)] = i * increment + incrementStart;
+    matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
+  }
+
+  for (size_t i = 1; i <= dimension + 1; ++i) {
+    matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+        i * increment;
+    matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+        i * increment;
+  }
+
+  int rowSize = 1 + dimension + 1;
+
+  int recvTopIdx = 1;
+  int sendTopIdx = recvTopIdx + rowSize;
+
+  int sendBottomIdx = myRows * rowSize + 1;
+  int recvBottomIdx = sendBottomIdx + rowSize;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  double t_start = MPI_Wtime();
+
+#pragma acc data copy(matrix) copyin(matrix_new)
   {
-    memset(matrix, 0, byte_dimension);
-    memset(matrix_new, 0, byte_dimension);
-
-#pragma acc parallel loop
-    for (size_t i = 1; i <= myRows; ++i)
-      for (size_t j = 1; j <= dimension; ++j)
-        matrix[(i * (dimension + 2)) + j] = 0.5;
-
-#pragma acc parallel loop
-    for (size_t i = 1; i <= myRows + 1; ++i) {
-      matrix[i * (dimension + 2)] = i * increment + incrementStart;
-      matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
-    }
-
-#pragma acc parallel loop
-    for (size_t i = 1; i <= dimension + 1; ++i) {
-      matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-          i * increment;
-      matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-          i * increment;
-    }
-
-    int rowSize = 1 + dimension + 1;
-
-    int recvTopIdx = 1;
-    int sendTopIdx = recvTopIdx + rowSize;
-
-    int sendBottomIdx = myRows * rowSize + 1;
-    int recvBottomIdx = sendBottomIdx + rowSize;
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    double t_start = MPI_Wtime();
-
 #pragma acc parallel
     {
       for (size_t it = 0; it < iterations; ++it) {
@@ -124,36 +123,36 @@ int main(int argc, char *argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t_end = MPI_Wtime();
+  }
 
-    if (myRank == 0)
-      printf("\nelapsed time = %f seconds\n", t_end - t_start);
+  if (myRank == 0)
+    printf("\nelapsed time = %f seconds\n", t_end - t_start);
 
-    if (myRank == 0) {
-      FILE *file = fopen("solution.dat", "w");
+  if (myRank == 0) {
+    FILE *file = fopen("solution.dat", "w");
 
-      // top
-      for (size_t j = 0; j < dimension + 2; ++j)
-        fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix[j]);
+    // top
+    for (size_t j = 0; j < dimension + 2; ++j)
+      fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix[j]);
 
-      save_gnuplot(file, matrix, myRows, dimension);
+    save_gnuplot(file, matrix, myRows, dimension);
 
-      int procRows = myRows;
-      for (int proc = 1; proc < nProcesses; ++proc) {
-        procRows = compute_my_rows(proc, dimension, nProcesses);
-        MPI_Recv(matrix, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        save_gnuplot(file, matrix, procRows, dimension);
-      }
-
-      // bottom
-      for (size_t j = 0; j < dimension + 2; ++j)
-        fprintf(file, "%f\t%f\t%f\n", h * j, 0,
-                matrix[(procRows + 1) * (dimension + 2) + j]);
-      fclose(file);
-    } else {
-      MPI_Send(matrix, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
-               MPI_COMM_WORLD);
+    int procRows = myRows;
+    for (int proc = 1; proc < nProcesses; ++proc) {
+      procRows = compute_my_rows(proc, dimension, nProcesses);
+      MPI_Recv(matrix, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      save_gnuplot(file, matrix, procRows, dimension);
     }
+
+    // bottom
+    for (size_t j = 0; j < dimension + 2; ++j)
+      fprintf(file, "%f\t%f\t%f\n", h * j, 0,
+              matrix[(procRows + 1) * (dimension + 2) + j]);
+    fclose(file);
+  } else {
+    MPI_Send(matrix, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
+             MPI_COMM_WORLD);
   }
 
   MPI_Finalize();
