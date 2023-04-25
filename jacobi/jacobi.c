@@ -110,12 +110,15 @@ int main(int argc, char *argv[]) {
         matrix = matrix_new;
         matrix_new = tmp_matrix;
 
-        MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                     matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                     0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
-                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#pragma acc host_data use_device(matrix)
+        {
+          MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                       matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                       0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+          MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                       0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
+                       0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
       }
     }
 
