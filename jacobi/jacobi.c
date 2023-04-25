@@ -121,8 +121,9 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    double t_end = MPI_Wtime();
   }
+
+  double t_end = MPI_Wtime();
 
   if (myRank == 0)
     printf("\nelapsed time = %f seconds\n", t_end - t_start);
