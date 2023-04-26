@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
 
       evolve(matrix_new, matrix, myRows, dimension);
 
-#pragma acc host_data use_device(matrix, matrix_new)
+#pragma acc host_data use_device(matrix_new)
       {
         MPI_Sendrecv(matrix_new + sendTopIdx, dimension, MPI_DOUBLE, aboveRank,
                      0, matrix_new + recvBottomIdx, dimension, MPI_DOUBLE,
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
       evolve(matrix, matrix_new, myRows, dimension);
 
-#pragma acc host_data use_device(matrix, matrix_new)
+#pragma acc host_data use_device(matrix)
       {
         MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
                      matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
 void evolve(double *matrix_new, double *matrix, size_t myRows,
             size_t dimension) {
-#pragma acc parallel loop
+#pragma acc parallel loop present(matrix, matrix_new)
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix[(i * (dimension + 2)) + j] =
