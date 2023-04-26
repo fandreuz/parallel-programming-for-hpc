@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
 #pragma acc data copy(matrix [0:matrixElementsCount])                          \
     copyin(matrix_new [0:matrixElementsCount])
   {
-    for (size_t it = 0; it < iterations; ++it) {
+    for (size_t it = 0; it < iterations / 2; ++it) {
 
 #pragma acc parallel loop
       for (size_t i = 1; i <= myRows; ++i)
@@ -110,11 +110,27 @@ int main(int argc, char *argv[]) {
                         matrix[((i + 1) * (dimension + 2)) + j] +
                         matrix[(i * (dimension + 2)) + (j - 1)]);
 
-      double *tmp_matrix = matrix;
-      matrix = matrix_new;
-      matrix_new = tmp_matrix;
+#pragma acc host_data use_device(matrix, matrix_new)
+      {
+        MPI_Sendrecv(matrix_new + sendTopIdx, dimension, MPI_DOUBLE, aboveRank,
+                     0, matrix_new + recvBottomIdx, dimension, MPI_DOUBLE,
+                     belowRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(matrix_new + sendBottomIdx, dimension, MPI_DOUBLE,
+                     belowRank, 0, matrix_new + recvTopIdx, dimension,
+                     MPI_DOUBLE, aboveRank, 0, MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
+      }
 
-#pragma acc host_data use_device(matrix)
+#pragma acc parallel loop
+      for (size_t i = 1; i <= myRows; ++i)
+        for (size_t j = 1; j <= dimension; ++j)
+          matrix[(i * (dimension + 2)) + j] =
+              (0.25) * (matrix_new[((i - 1) * (dimension + 2)) + j] +
+                        matrix_new[(i * (dimension + 2)) + (j + 1)] +
+                        matrix_new[((i + 1) * (dimension + 2)) + j] +
+                        matrix_new[(i * (dimension + 2)) + (j - 1)]);
+
+#pragma acc host_data use_device(matrix, matrix_new)
       {
         MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
                      matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
