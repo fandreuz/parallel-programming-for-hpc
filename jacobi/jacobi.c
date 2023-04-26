@@ -9,9 +9,6 @@ const double h = 0.1;
 
 void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dim);
 
-void evolve(double *matrix, double *matrix_new, size_t myRows,
-            size_t dimension);
-
 int above_peer(int myRank);
 int below_peer(int myRank, int nProcesses);
 size_t compute_my_rows(int myRank, int dimension, int nProcesses);
@@ -102,23 +99,31 @@ int main(int argc, char *argv[]) {
 #pragma acc data copy(matrix [0:matrixElementsCount])                          \
     copyin(matrix_new [0:matrixElementsCount])
   {
-      for (size_t it = 0; it < iterations; ++it) {
-        evolve(matrix, matrix_new, myRows, dimension);
+    for (size_t it = 0; it < iterations; ++it) {
 
-        double *tmp_matrix = matrix;
-        matrix = matrix_new;
-        matrix_new = tmp_matrix;
+#pragma acc parallel loop
+      for (size_t i = 1; i <= myRows; ++i)
+        for (size_t j = 1; j <= dimension; ++j)
+          matrix_new[(i * (dimension + 2)) + j] =
+              (0.25) * (matrix[((i - 1) * (dimension + 2)) + j] +
+                        matrix[(i * (dimension + 2)) + (j + 1)] +
+                        matrix[((i + 1) * (dimension + 2)) + j] +
+                        matrix[(i * (dimension + 2)) + (j - 1)]);
+
+      double *tmp_matrix = matrix;
+      matrix = matrix_new;
+      matrix_new = tmp_matrix;
 
 #pragma acc host_data use_device(matrix)
-        {
-          MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                       matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                       0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                       0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
-                       0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
+      {
+        MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                     matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                     0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
+                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       }
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -178,18 +183,6 @@ int below_peer(int myRank, int nProcesses) {
     return MPI_PROC_NULL;
   }
   return myRank + 1;
-}
-
-void evolve(double *matrix, double *matrix_new, size_t myRows,
-            size_t dimension) {
-#pragma acc parallel loop
-  for (size_t i = 1; i <= myRows; ++i)
-    for (size_t j = 1; j <= dimension; ++j)
-      matrix_new[(i * (dimension + 2)) + j] =
-          (0.25) * (matrix[((i - 1) * (dimension + 2)) + j] +
-                    matrix[(i * (dimension + 2)) + (j + 1)] +
-                    matrix[((i + 1) * (dimension + 2)) + j] +
-                    matrix[(i * (dimension + 2)) + (j - 1)]);
 }
 
 void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dimension) {
