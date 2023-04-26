@@ -7,11 +7,16 @@
 
 const double h = 0.1;
 
-void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dim);
+void shareData(double *matrix, size_t myRows, size_t dimension, int aboveRank,
+               int belowRank);
+void evolve(double *matrix_new, double *matrix, size_t myRows,
+            size_t dimension);
 
-int above_peer(int myRank);
-int below_peer(int myRank, int nProcesses);
+int computeAbovePeer(int myRank);
+int computeBelowPeer(int myRank, int nProcesses);
 size_t compute_my_rows(int myRank, int dimension, int nProcesses);
+
+void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dim);
 
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -19,8 +24,8 @@ int main(int argc, char *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
-  int aboveRank = above_peer(myRank);
-  int belowRank = below_peer(myRank, nProcesses);
+  int aboveRank = computeAbovePeer(myRank);
+  int belowRank = computeBelowPeer(myRank, nProcesses);
 
 #ifdef _OPENACC
   int devtype = acc_get_device_type();
@@ -101,49 +106,15 @@ int main(int argc, char *argv[]) {
   {
     for (size_t it = 0; it < iterations / 2; ++it) {
 
-#pragma acc parallel loop
-      for (size_t i = 1; i <= myRows; ++i)
-        for (size_t j = 1; j <= dimension; ++j)
-          matrix_new[(i * (dimension + 2)) + j] =
-              (0.25) * (matrix[((i - 1) * (dimension + 2)) + j] +
-                        matrix[(i * (dimension + 2)) + (j + 1)] +
-                        matrix[((i + 1) * (dimension + 2)) + j] +
-                        matrix[(i * (dimension + 2)) + (j - 1)]);
+      evolve(matrix_new, matrix, myRows, dimension);
+      shareData(matrix_new, myRows, dimension, aboveRank, belowRank);
 
-#pragma acc host_data use_device(matrix, matrix_new)
-      {
-        MPI_Sendrecv(matrix_new + sendTopIdx, dimension, MPI_DOUBLE, aboveRank,
-                     0, matrix_new + recvBottomIdx, dimension, MPI_DOUBLE,
-                     belowRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Sendrecv(matrix_new + sendBottomIdx, dimension, MPI_DOUBLE,
-                     belowRank, 0, matrix_new + recvTopIdx, dimension,
-                     MPI_DOUBLE, aboveRank, 0, MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
-      }
-
-#pragma acc parallel loop
-      for (size_t i = 1; i <= myRows; ++i)
-        for (size_t j = 1; j <= dimension; ++j)
-          matrix[(i * (dimension + 2)) + j] =
-              (0.25) * (matrix_new[((i - 1) * (dimension + 2)) + j] +
-                        matrix_new[(i * (dimension + 2)) + (j + 1)] +
-                        matrix_new[((i + 1) * (dimension + 2)) + j] +
-                        matrix_new[(i * (dimension + 2)) + (j - 1)]);
-
-#pragma acc host_data use_device(matrix, matrix_new)
-      {
-        MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                     matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
-                     0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
-                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      }
+      evolve(matrix, matrix_new, myRows, dimension);
+      shareData(matrix, myRows, dimension, aboveRank, belowRank);
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
   }
 
+  MPI_Barrier(MPI_COMM_WORLD);
   double t_end = MPI_Wtime();
 
   if (myRank == 0)
@@ -181,20 +152,45 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+void shareData(double *matrix, size_t myRows, size_t dimension, int aboveRank,
+               int belowRank) {
+#pragma acc host_data use_device(matrix, matrix_new)
+  {
+    MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                 matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
+                 matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+}
+
+void evolve(double *matrix_new, double *matrix, size_t myRows,
+            size_t dimension) {
+#pragma acc parallel loop
+  for (size_t i = 1; i <= myRows; ++i)
+    for (size_t j = 1; j <= dimension; ++j)
+      matrix[(i * (dimension + 2)) + j] =
+          (0.25) * (matrix_new[((i - 1) * (dimension + 2)) + j] +
+                    matrix_new[(i * (dimension + 2)) + (j + 1)] +
+                    matrix_new[((i + 1) * (dimension + 2)) + j] +
+                    matrix_new[(i * (dimension + 2)) + (j - 1)]);
+}
+
 size_t compute_my_rows(int myRank, int dimension, int nProcesses) {
   size_t myRows = dimension / nProcesses;
   myRows += myRank < dimension % nProcesses;
   return myRows;
 }
 
-int above_peer(int myRank) {
+int computeAbovePeer(int myRank) {
   if (myRank == 0) {
     return MPI_PROC_NULL;
   }
   return myRank - 1;
 }
 
-int below_peer(int myRank, int nProcesses) {
+int computeBelowPeer(int myRank, int nProcesses) {
   if (myRank == nProcesses - 1) {
     return MPI_PROC_NULL;
   }
