@@ -11,7 +11,7 @@ Weekly exercises for the course in _Parallel programming for HPC_ @ UniTS.
 ## Some plots
 The following time measurements were taken on standard nodes on [Marconi-100](https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=336727645).
 
-### MatMul
+### MatMul (MPI, CUDA, cuBLAS)
 Distributed matrix multiplication ([matmul](matmul)) with MPI, BLAS and cuBLAS.
 
 <ins>**2500x2500**</ins>
@@ -21,3 +21,7 @@ Distributed matrix multiplication ([matmul](matmul)) with MPI, BLAS and cuBLAS.
 <ins>**5000x5000**</ins>
 
 ![](imgs/matmul_5000.png)
+
+### Jacobi (MPI, OpenACC)
+
+![](imgs/jacobi_10000_1000.png)
