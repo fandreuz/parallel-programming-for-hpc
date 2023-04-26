@@ -99,10 +99,9 @@ int main(int argc, char *argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   double t_start = MPI_Wtime();
 
-#pragma acc data copy(matrix[0:matrixElementsCount]) copyin(matrix_new[0:matrixElementsCount])
+#pragma acc data copy(matrix [0:matrixElementsCount])                          \
+    copyin(matrix_new [0:matrixElementsCount])
   {
-#pragma acc parallel
-    {
       for (size_t it = 0; it < iterations; ++it) {
         evolve(matrix, matrix_new, myRows, dimension);
 
@@ -120,7 +119,6 @@ int main(int argc, char *argv[]) {
                        0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
       }
-    }
 
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -184,7 +182,7 @@ int below_peer(int myRank, int nProcesses) {
 
 void evolve(double *matrix, double *matrix_new, size_t myRows,
             size_t dimension) {
-#pragma acc loop
+#pragma acc parallel loop
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
       matrix_new[(i * (dimension + 2)) + j] =
