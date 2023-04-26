@@ -7,8 +7,6 @@
 
 const double h = 0.1;
 
-void shareData(double *matrix, size_t myRows, size_t dimension, int aboveRank,
-               int belowRank);
 void evolve(double *matrix_new, double *matrix, size_t myRows,
             size_t dimension);
 
@@ -107,10 +105,29 @@ int main(int argc, char *argv[]) {
     for (size_t it = 0; it < iterations / 2; ++it) {
 
       evolve(matrix_new, matrix, myRows, dimension);
-      shareData(matrix_new, myRows, dimension, aboveRank, belowRank);
+
+#pragma acc host_data use_device(matrix, matrix_new)
+      {
+        MPI_Sendrecv(matrix_new + sendTopIdx, dimension, MPI_DOUBLE, aboveRank,
+                     0, matrix_new + recvBottomIdx, dimension, MPI_DOUBLE,
+                     belowRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(matrix_new + sendBottomIdx, dimension, MPI_DOUBLE,
+                     belowRank, 0, matrix_new + recvTopIdx, dimension,
+                     MPI_DOUBLE, aboveRank, 0, MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
+      }
 
       evolve(matrix, matrix_new, myRows, dimension);
-      shareData(matrix, myRows, dimension, aboveRank, belowRank);
+
+#pragma acc host_data use_device(matrix, matrix_new)
+      {
+        MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
+                     matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank,
+                     0, matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank,
+                     0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      }
     }
   }
 
@@ -150,19 +167,6 @@ int main(int argc, char *argv[]) {
   MPI_Finalize();
 
   return 0;
-}
-
-void shareData(double *matrix, size_t myRows, size_t dimension, int aboveRank,
-               int belowRank) {
-#pragma acc host_data use_device(matrix, matrix_new)
-  {
-    MPI_Sendrecv(matrix + sendTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                 matrix + recvBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Sendrecv(matrix + sendBottomIdx, dimension, MPI_DOUBLE, belowRank, 0,
-                 matrix + recvTopIdx, dimension, MPI_DOUBLE, aboveRank, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
 }
 
 void evolve(double *matrix_new, double *matrix, size_t myRows,
