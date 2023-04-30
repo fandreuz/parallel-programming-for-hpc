@@ -51,12 +51,9 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3,
   fftw_mpi_init();
   fft->mpi_comm = mpi_comm;
 
-  ptrdiff_t start;
-  ptrdiff_t size;
-  fft->local_size_grid =
-      fftw_mpi_local_size_3d(n1, n2, n3, mpi_comm, &size, &start);
-  fft->local_n1 = size;
-  fft->local_n1_offset = start;
+  fft->global_size_grid = n1 * n2 * n3;
+  fft->local_size_grid = fftw_mpi_local_size_3d(
+      n1, n2, n3, mpi_comm, &fft->local_n1, &fft->local_n1_offset);
 
   fft->fftw_data =
       (fftw_complex *)fftw_malloc(fft->local_size_grid * sizeof(fftw_complex));
@@ -96,12 +93,8 @@ void close_fftw(fftw_mpi_handler *fft) {
  */
 void fft_3d(fftw_mpi_handler *fft, int n1, int n2, int n3, double *data_direct,
             fftw_complex *data_rec, bool direct_to_reciprocal) {
-  double fac;
-  int i;
-
-  // Now distinguish in which direction the FFT is performed
   if (direct_to_reciprocal) {
-    for (i = 0; i < fft->local_n1 * n2 * n3; i++) {
+    for (int i = 0; i < fft->local_n1 * n2 * n3; i++) {
       fft->fftw_data[i] = data_direct[i] + 0.0 * I;
     }
 
@@ -115,9 +108,8 @@ void fft_3d(fftw_mpi_handler *fft, int n1, int n2, int n3, double *data_direct,
 
     fftw_execute_dft(fft->bw_plan, fft->fftw_data, fft->fftw_data);
 
-    fac = 1.0 / (n1 * n2 * n3);
-
-    for (i = 0; i < fft->local_n1 * n2 * n3; ++i) {
+    double fac = 1.0 / (n1 * n2 * n3);
+    for (int i = 0; i < fft->local_n1 * n2 * n3; ++i) {
       data_direct[i] = creal(fft->fftw_data[i]) * fac;
     }
   }
