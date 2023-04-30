@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
         for (int i2 = 0; i2 < n2; ++i2) {
           double x2 = L2 * ((double)i2) / n2 - 0.5 * L2;
           for (int i1 = 0; i1 < fft_h.local_n1; ++i1) {
-            double x1 = L1 * ((double)i1) / n1 - 0.5 * L1;
+            double x1 = L1 * ((double)i1 + fft_h.local_n1_offset) / n1 - 0.5 * L1;
             double rr = pow(x1, 2) + pow(x2, 2) + pow(x3, 2);
             int index = index_f(i1, i2, i3, fft_h.local_n1, n2, n3);
 
