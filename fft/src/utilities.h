@@ -10,6 +10,7 @@
 #include <fftw3.h>
 #include <stdbool.h>
 #include <mpi.h>
+#include <fftw3-mpi.h>
 #define pi 3.14159265358979323846
 
 
