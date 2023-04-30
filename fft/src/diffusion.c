@@ -160,19 +160,21 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      MPI_Allreduce(&buffer, &buffer, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Reduce(&buffer, &buffer, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-      buffer[0] *= fac;
-      buffer[1] *= fac;
+      if (myRank == 0) {
+        buffer[0] *= fac;
+        buffer[1] *= fac;
 
-      double end = seconds();
-      printf(" %d %17.15f %17.15f Elapsed time per iteration %f \n ", istep,
-             buffer[1], buffer[0], (end - start) / istep);
+        double end = seconds();
+        printf(" %d %17.15f %17.15f Elapsed time per iteration %f \n ", istep,
+               buffer[1], buffer[0], (end - start) / istep);
 
-      plot_data_2d("concentration", n1, n2, n3, fft->local_n1,
-                   fft->local_n1_offset, 2, conc);
-      plot_data_1d("1d_conc", n1, n2, n3, fft->local_n1, fft->local_n1_offset,
-                   3, conc);
+        plot_data_2d("concentration", n1, n2, n3, fft->local_n1,
+                     fft->local_n1_offset, 2, conc);
+        plot_data_1d("1d_conc", n1, n2, n3, fft->local_n1, fft->local_n1_offset,
+                     3, conc);
+      }
     }
   }
 
