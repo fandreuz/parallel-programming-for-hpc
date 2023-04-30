@@ -32,8 +32,8 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
    * a full 3D FFT of the data, and then derive.
    *
    */
-  aux = (fftw_complex *)fftw_malloc(fft->local_n1 * n2 * n3 *
-                                    sizeof(fftw_complex));
+  aux =
+      (fftw_complex *)fftw_malloc(fft->local_size_grid * sizeof(fftw_complex));
 
   // First get the FFT of data
   fft_3d(fft, n1, n2, n3, data, aux, true);

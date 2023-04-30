@@ -53,9 +53,9 @@ int main(int argc, char *argv[]) {
   init_fftw(&fft_h, n1, n2, n3, MPI_COMM_WORLD);
 
   double *diffusivity =
-      (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
-  double *conc = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
-  double *dconc = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
+      (double *)malloc(local_size_grid * sizeof(double));
+  double *conc = (double *)malloc(local_size_grid * sizeof(double));
+  double *dconc = (double *)malloc(local_size_grid * sizeof(double));
 
   /*
    * Define the diffusivity inside the system and
@@ -102,16 +102,18 @@ int main(int argc, char *argv[]) {
                3, diffusivity);
 
   double fac = L1 * L2 * L3 / (n1 * n2 * n3);
+  int local_size_grid = fft_h.local_n1 * n2 * n3;
 
   /*
    * Normalize the concentration.
    */
   ss = 1.0 / (ss * fac);
-  for (int i1 = 0; i1 < fft_h.local_n1 * n2 * n3; ++i1)
+  for (int i1 = 0; i1 < local_size_grid; ++i1)
     conc[i1] *= ss;
 
-  double *aux1 = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
-  double *aux2 = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
+
+  double *aux1 = (double *)malloc(local_size_grid * sizeof(double));
+  double *aux2 = (double *)malloc(local_size_grid * sizeof(double));
   double *send_buffer = (double *)malloc(2 * sizeof(double));
   double *recv_buffer = (double *)malloc(2 * sizeof(double));
 
@@ -124,22 +126,22 @@ int main(int argc, char *argv[]) {
    */
   double start = seconds();
   for (int istep = 1; istep <= nstep; ++istep) {
-    for (int i1 = 0; i1 < fft_h.local_n1 * n2 * n3; ++i1)
+    for (int i1 = 0; i1 < local_size_grid; ++i1)
       dconc[i1] = 0.0;
 
     for (int ipol = 1; ipol <= 3; ++ipol) {
       derivative(&fft_h, n1, n2, n3, L1, L2, L3, ipol, conc, aux1);
-      for (int i1 = 0; i1 < fft_h.local_n1 * n2 * n3; ++i1) {
+      for (int i1 = 0; i1 < local_size_grid; ++i1) {
         aux1[i1] *= diffusivity[i1];
       }
 
       derivative(&fft_h, n1, n2, n3, L1, L2, L3, ipol, aux1, aux2);
       // summing up contributions from the three spatial directions
-      for (int i1 = 0; i1 < fft_h.local_n1 * n2 * n3; ++i1)
+      for (int i1 = 0; i1 < local_size_grid; ++i1)
         dconc[i1] += aux2[i1];
     }
 
-    for (int i1 = 0; i1 < fft_h.local_n1 * n2 * n3; ++i1)
+    for (int i1 = 0; i1 < local_size_grid; ++i1)
       conc[i1] += dt * dconc[i1];
 
     if (istep % 30 == 1) {

@@ -94,22 +94,22 @@ void close_fftw(fftw_mpi_handler *fft) {
 void fft_3d(fftw_mpi_handler *fft, int n1, int n2, int n3, double *data_direct,
             fftw_complex *data_rec, bool direct_to_reciprocal) {
   if (direct_to_reciprocal) {
-    for (int i = 0; i < fft->local_n1 * n2 * n3; i++) {
+    for (int i = 0; i < fft->local_size_grid; i++) {
       fft->fftw_data[i] = data_direct[i] + 0.0 * I;
     }
 
     fftw_execute_dft(fft->fw_plan, fft->fftw_data, fft->fftw_data);
 
     memcpy(data_rec, fft->fftw_data,
-           fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
+           fft->local_size_grid * sizeof(fftw_complex));
   } else {
     memcpy(fft->fftw_data, data_rec,
-           fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
+           fft->local_size_grid * sizeof(fftw_complex));
 
     fftw_execute_dft(fft->bw_plan, fft->fftw_data, fft->fftw_data);
 
-    double fac = 1.0 / (n1 * n2 * n3);
-    for (int i = 0; i < fft->local_n1 * n2 * n3; ++i) {
+    double fac = 1.0 / fft->global_size_grid;
+    for (int i = 0; i < fft->local_size_grid; ++i) {
       data_direct[i] = creal(fft->fftw_data[i]) * fac;
     }
   }
