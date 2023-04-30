@@ -26,7 +26,7 @@
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-int main() {
+int main(int argc, char *argv[]) {
   int myRank, nProcesses;
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
