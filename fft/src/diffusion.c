@@ -182,7 +182,8 @@ int main(int argc, char *argv[]) {
   }
 
   close_fftw(&fft_h);
-  free(buffer);
+  free(send_buffer);
+  free(recv_buffer);
   free(diffusivity);
   free(conc);
   free(dconc);
