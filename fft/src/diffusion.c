@@ -35,11 +35,11 @@ int main(int argc, char *argv[]) {
   // Dimensions of the system
   const double L1 = 10., L2 = 10., L3 = 20.;
   // Grid size
-  const int n1 = 48, n2 = 48, n3 = 96;
+  const int n1 = 64, n2 = 64, n3 = 64;
   // time step for time integration
-  const double dt = 2.e-3;
+  const double dt = 2.e-4;
   // number of time steps
-  const int nstep = 101;
+  const int nstep = 100;
   // Radius of diffusion channel
   const double rad_diff = 0.7;
   // Radius of starting concentration
