@@ -6,17 +6,5 @@ SRC = diffusion.c plot_data.c fft_wrapper.c derivative.c
 HEAD = utilities.h
 OBJ = $(SRC:.c=.o)
 
-
-all: $(EXE)
-
-$(EXE): $(OBJ)
-	$(CC) $^ $(LIBS) -o $@
-
-%.o : %.c $(HEAD)
-	$(CC) $(CFLAGS) -c $<
-
-flush:
-	rm -f *.dat
-
-clean: 
-	rm -f *.o *.x *~
+compile:
+	$(CC) $(CFLAGS) $(LIBS) $(SRC) -o $(EXE)
