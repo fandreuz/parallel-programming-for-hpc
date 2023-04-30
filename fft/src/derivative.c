@@ -13,9 +13,6 @@
  */
 
 #include "utilities.h"
-#include <complex.h>
-#include <fftw3.h>
-#include <stdbool.h>
 
 /*
  * Calculate the derivative in direction ipol of the array 'data'
