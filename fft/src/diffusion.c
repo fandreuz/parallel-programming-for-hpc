@@ -27,6 +27,10 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 int main() {
+  int myRank, nProcesses;
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
   // Dimensions of the system
   double L1 = 10., L2 = 10., L3 = 20.;
@@ -49,11 +53,6 @@ int main() {
   double f1conc, f2conc, f3conc, f1diff, f2diff, f3diff, fac, ss;
   double x1, x2, x3, rr, r2mean;
   fftw_mpi_handler fft_h;
-
-  /*
-   * Initializzation of the MPI environment
-   *
-   */
 
   /*
    * initialize the fftw system and local dimension
@@ -200,9 +199,7 @@ int main() {
   free(aux1);
   free(aux2);
 
-  /*
-   * Finalize the MPI environment
-   */
+  MPI_Finalize();
 
   return 0;
 }
