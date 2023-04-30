@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  MPI_Allreduce(&ss, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /*
    * HINT: The parallel version of  the output routines is provided in the
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      MPI_Reduce(buffer, buffer, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(MPI_IN_PLACE, buffer, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
       if (myRank == 0) {
         buffer[0] *= fac;
