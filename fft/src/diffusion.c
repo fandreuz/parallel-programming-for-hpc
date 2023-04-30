@@ -21,8 +21,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-// HINT: include mpi and fftw3-mpi
-//       http://www.fftw.org/doc/MPI-Files-and-Data-Types.html#MPI-Files-and-Data-Types
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
@@ -90,11 +88,6 @@ int main(int argc, char *argv[]) {
   double ss;
   MPI_Allreduce(&ss_send, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  /*
-   * HINT: The parallel version of  the output routines is provided in the
-   * mpi_output_routines folder
-   *
-   */
   plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
                1, diffusivity);
   plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
