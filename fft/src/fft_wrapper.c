@@ -49,7 +49,7 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3,
    * fftw_mpi See also: http://www.fftw.org/doc/MPI-Initialization.html
    */
   fftw_mpi_init();
-  fft->mpi_comm = comm;
+  fft->mpi_comm = mpi_comm;
 
   /*
    *  Allocate a distributed grid for complex FFT using aligned memory
