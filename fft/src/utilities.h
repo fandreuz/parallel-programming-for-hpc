@@ -43,6 +43,6 @@ void close_fftw( fftw_mpi_handler* fft );
 void derivative( fftw_mpi_handler* fft,int n1, int n2, int n3, double L1, double L2, double L3, int ipol, double* data, double* deriv );
 
 /* New interface for fft_3d which includes a parameter of kind fftw_mpi_handler */
-void fft_3d( fftw_mpi_handler* fft, int n1, int n2, int n3, double *data_direct, fftw_complex* data_rec, bool direct_to_reciprocal );
+void fft_3d( fftw_mpi_handler* fft, double *data_direct, fftw_complex* data_rec, bool direct_to_reciprocal );
 
 #endif

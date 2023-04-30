@@ -91,7 +91,7 @@ void close_fftw(fftw_mpi_handler *fft) {
  * f(l) = 1/N \sum_{k=0}^{N-1} exp(+ 2 \pi I k*l/N) F(k)
  *
  */
-void fft_3d(fftw_mpi_handler *fft, int n1, int n2, int n3, double *data_direct,
+void fft_3d(fftw_mpi_handler *fft, double *data_direct,
             fftw_complex *data_rec, bool direct_to_reciprocal) {
   if (direct_to_reciprocal) {
     for (int i = 0; i < fft->local_size_grid; i++) {
