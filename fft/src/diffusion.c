@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      MPI_Reduce(&buffer, &buffer, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Reduce(&buffer, &buffer, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
       if (myRank == 0) {
         buffer[0] *= fac;
