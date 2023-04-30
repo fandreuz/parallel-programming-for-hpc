@@ -12,9 +12,6 @@
  */
 
 #include "utilities.h"
-#include <complex.h>
-#include <fftw3.h>
-#include <stdbool.h>
 #include <string.h>
 
 double seconds() {
