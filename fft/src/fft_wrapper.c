@@ -107,9 +107,11 @@ void fft_3d(fftw_mpi_handler *fft, int n1, int n2, int n3, double *data_direct,
 
     fftw_execute_dft(fft->fw_plan, fft->fftw_data, fft->fftw_data);
 
-    memcpy(data_rec, fft->fftw_data, fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
+    memcpy(data_rec, fft->fftw_data,
+           fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
   } else {
-    memcpy(fft->fftw_data, data_rec, fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
+    memcpy(fft->fftw_data, data_rec,
+           fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
 
     fftw_execute_dft(fft->bw_plan, fft->fftw_data, fft->fftw_data);
 

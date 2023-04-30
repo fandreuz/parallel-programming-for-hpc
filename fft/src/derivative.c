@@ -32,7 +32,8 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
    * a full 3D FFT of the data, and then derive.
    *
    */
-  aux = (fftw_complex *)fftw_malloc(fft->local_n1 * n2 * n3 * sizeof(fftw_complex));
+  aux = (fftw_complex *)fftw_malloc(fft->local_n1 * n2 * n3 *
+                                    sizeof(fftw_complex));
 
   // First get the FFT of data
   fft_3d(fft, n1, n2, n3, data, aux, true);
@@ -40,7 +41,7 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
   if (ipol == 1) {
 
     G = 2.0 * pi / L1;
-    for (i1 = 0; i1 < n1; ++i1) {
+    for (i1 = 0; i1 < fft->local_n1; ++i1) {
 
       i = i1;
       if (i1 > n1 / 2)
