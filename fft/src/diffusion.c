@@ -60,16 +60,6 @@ int main(int argc, char *argv[]) {
    */
   init_fftw(&fft_h, n1, n2, n3, MPI_COMM_WORLD);
 
-  /*
-   * Allocate distribute memory arrays
-   * HINT: the arrays need to be distributed, so you have to set the correct
-   * sizes Use fftw_mpi_local_size_3d to calculate sizes
-   *       http://www.fftw.org/doc/MPI-Data-Distribution-Functions.html
-   *
-   * More hints are reported into the fft_wrapper.c file where the fft_init_mpi
-   * is defined
-   *
-   */
   diffusivity = (double *)malloc(n1 * n2 * n3 * sizeof(double));
   conc = (double *)malloc(n1 * n2 * n3 * sizeof(double));
   dconc = (double *)malloc(n1 * n2 * n3 * sizeof(double));
@@ -79,11 +69,7 @@ int main(int argc, char *argv[]) {
   /*
    * Define the diffusivity inside the system and
    * the starting concentration
-   *
-   * ss is to integrate (and normalize) the concentration
-   *
    */
-
   ss = 0.0;
 
   for (i3 = 0; i3 < n3; ++i3) {
