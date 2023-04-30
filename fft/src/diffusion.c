@@ -51,6 +51,7 @@ int main(int argc, char *argv[]) {
    */
   fftw_mpi_handler fft_h;
   init_fftw(&fft_h, n1, n2, n3, MPI_COMM_WORLD);
+  int local_size_grid = fft_h.local_n1 * n2 * n3;
 
   double *diffusivity =
       (double *)malloc(local_size_grid * sizeof(double));
@@ -102,7 +103,6 @@ int main(int argc, char *argv[]) {
                3, diffusivity);
 
   double fac = L1 * L2 * L3 / (n1 * n2 * n3);
-  int local_size_grid = fft_h.local_n1 * n2 * n3;
 
   /*
    * Normalize the concentration.
