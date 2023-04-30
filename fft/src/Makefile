@@ -7,4 +7,4 @@ HEAD = utilities.h
 OBJ = $(SRC:.c=.o)
 
 compile:
-    $(CC) $(CFLAGS) $(LIBS) $(SRC) -o $(EXE) -std=c11 -pedantic
+    	$(CC) $(CFLAGS) $(LIBS) $(SRC) -o $(EXE) -std=c11 -pedantic
