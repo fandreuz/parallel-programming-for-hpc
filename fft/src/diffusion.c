@@ -15,10 +15,7 @@
  */
 
 #include "utilities.h"
-#include <complex.h>
-#include <fftw3.h>
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
