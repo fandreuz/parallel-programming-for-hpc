@@ -43,7 +43,7 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
     G = 2.0 * pi / L1;
     for (i1 = 0; i1 < fft->local_n1; ++i1) {
 
-      i = i1;
+      i = i1 + fft->local_n1_offset;
       if (i1 > n1 / 2)
         i = i1 - n1;
       if (i1 == n1 / 2)
