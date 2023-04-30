@@ -41,10 +41,6 @@ int index_f(int i1, int i2, int i3, int n1, int n2, int n3) {
 
 void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3,
                MPI_Comm mpi_comm) {
-  /*
-   * Call to fftw_mpi_init is needed to initialize a parallel enviroment for the
-   * fftw_mpi See also: http://www.fftw.org/doc/MPI-Initialization.html
-   */
   fftw_mpi_init();
   fft->mpi_comm = mpi_comm;
 
