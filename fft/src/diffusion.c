@@ -172,12 +172,12 @@ int main(int argc, char *argv[]) {
         double end = seconds();
         printf(" %d %17.15f %17.15f Elapsed time per iteration %f \n ", istep,
                recv_buffer[1], recv_buffer[0], (end - start) / istep);
-
-        plot_data_2d("concentration", n1, n2, n3, fft_h.local_n1,
-                     fft_h.local_n1_offset, 2, conc);
-        plot_data_1d("1d_conc", n1, n2, n3, fft_h.local_n1,
-                     fft_h.local_n1_offset, 3, conc);
       }
+
+      plot_data_2d("concentration", n1, n2, n3, fft_h.local_n1,
+                   fft_h.local_n1_offset, 2, conc);
+      plot_data_1d("1d_conc", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
+                   3, conc);
     }
   }
 
