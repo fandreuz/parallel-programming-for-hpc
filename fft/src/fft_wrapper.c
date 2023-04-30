@@ -95,7 +95,7 @@ void fft_3d(fftw_mpi_handler *fft, double *data_direct,
       fft->fftw_data[i] = data_direct[i] + 0.0 * I;
     }
 
-    fftw_execute_dft(fft->fw_plan, fft->fftw_data, fft->fftw_data);
+    fftw_mpi_execute_dft(fft->fw_plan, fft->fftw_data, fft->fftw_data);
 
     memcpy(data_rec, fft->fftw_data,
            fft->local_size_grid * sizeof(fftw_complex));
@@ -103,7 +103,7 @@ void fft_3d(fftw_mpi_handler *fft, double *data_direct,
     memcpy(fft->fftw_data, data_rec,
            fft->local_size_grid * sizeof(fftw_complex));
 
-    fftw_execute_dft(fft->bw_plan, fft->fftw_data, fft->fftw_data);
+    fftw_mpi_execute_dft(fft->bw_plan, fft->fftw_data, fft->fftw_data);
 
     double fac = 1.0 / fft->global_size_grid;
     for (int i = 0; i < fft->local_size_grid; ++i) {
