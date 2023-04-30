@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
    * Define the diffusivity inside the system and
    * the starting concentration
    */
-  double ss = 0.0;
+  double ss_send = 0.0;
 
   for (int i3 = 0; i3 < n3; ++i3) {
     double x3 = L3 * ((double)i3) / n3;
@@ -81,24 +81,25 @@ int main(int argc, char *argv[]) {
         int index = index_f(i1, i2, i3, fft_h.local_n1, n2, n3);
         diffusivity[index] = MAX(f1diff * f2diff, f2diff * f3diff);
         conc[index] = f1conc * f2conc * f3conc;
-        ss += conc[index];
+        ss_send += conc[index];
       }
     }
   }
 
-  MPI_Allreduce(MPI_IN_PLACE, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  double ss;
+  MPI_Allreduce(&ss_send, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /*
    * HINT: The parallel version of  the output routines is provided in the
    * mpi_output_routines folder
    *
    */
-  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1,
-               fft_h.local_n1_offset, 1, diffusivity);
-  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1,
-               fft_h.local_n1_offset, 2, diffusivity);
-  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1,
-               fft_h.local_n1_offset, 3, diffusivity);
+  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
+               1, diffusivity);
+  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
+               2, diffusivity);
+  plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
+               3, diffusivity);
 
   double fac = L1 * L2 * L3 / (n1 * n2 * n3);
 
@@ -111,7 +112,8 @@ int main(int argc, char *argv[]) {
 
   double *aux1 = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
   double *aux2 = (double *)malloc(fft_h.local_n1 * n2 * n3 * sizeof(double));
-  double *buffer = (double *)malloc(2 * sizeof(double));
+  double *send_buffer = (double *)malloc(2 * sizeof(double));
+  double *recv_buffer = (double *)malloc(2 * sizeof(double));
 
   /*
    * Now everything is defined: system size, diffusivity inside the system, and
@@ -142,8 +144,8 @@ int main(int argc, char *argv[]) {
 
     if (istep % 30 == 1) {
       // Check the normalization of conc
-      buffer[0] = 0.0; // ss
-      buffer[1] = 0.0; // r2mean
+      send_buffer[0] = 0.0; // ss
+      send_buffer[1] = 0.0; // r2mean
 
       for (int i3 = 0; i3 < n3; ++i3) {
         double x3 = L3 * ((double)i3) / n3 - 0.5 * L3;
@@ -154,21 +156,22 @@ int main(int argc, char *argv[]) {
             double rr = pow(x1, 2) + pow(x2, 2) + pow(x3, 2);
             int index = index_f(i1, i2, i3, fft_h.local_n1, n2, n3);
 
-            buffer[0] += conc[index];
-            buffer[1] += conc[index] * rr;
+            send_buffer[0] += conc[index];
+            send_buffer[1] += conc[index] * rr;
           }
         }
       }
 
-      MPI_Reduce(MPI_IN_PLACE, buffer, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(send_buffer, recv_buffer, 2, MPI_DOUBLE, MPI_SUM, 0,
+                 MPI_COMM_WORLD);
 
       if (myRank == 0) {
-        buffer[0] *= fac;
-        buffer[1] *= fac;
+        recv_buffer[0] *= fac;
+        recv_buffer[1] *= fac;
 
         double end = seconds();
         printf(" %d %17.15f %17.15f Elapsed time per iteration %f \n ", istep,
-               buffer[1], buffer[0], (end - start) / istep);
+               recv_buffer[1], recv_buffer[0], (end - start) / istep);
 
         plot_data_2d("concentration", n1, n2, n3, fft_h.local_n1,
                      fft_h.local_n1_offset, 2, conc);
