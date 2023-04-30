@@ -56,8 +56,6 @@ int main(int argc, char *argv[]) {
       (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
   double *conc = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
   double *dconc = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
-  double *aux1 = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
-  double *aux2 = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
 
   /*
    * Define the diffusivity inside the system and
@@ -80,7 +78,7 @@ int main(int argc, char *argv[]) {
         double f1diff = exp(-pow((x1 - 0.5 * L1) / rad_diff, 2));
         double f1conc = exp(-pow((x1 - 0.5 * L1) / rad_conc, 2));
 
-        int index = index_f(fft->local_n1, i2, i3, n1, n2, n3);
+        int index = index_f(i1, i2, i3, fft->local_n1, n2, n3);
         diffusivity[index] = MAX(f1diff * f2diff, f2diff * f3diff);
         conc[index] = f1conc * f2conc * f3conc;
         ss += conc[index];
@@ -88,7 +86,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  MPI_Allreduce(&ss, &ss, int 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&ss, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /*
    * HINT: The parallel version of  the output routines is provided in the
@@ -111,6 +109,10 @@ int main(int argc, char *argv[]) {
   for (int i1 = 0; i1 < fft->local_n1 * n2 * n3; ++i1)
     conc[i1] *= ss;
 
+  double *aux1 = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
+  double *aux2 = (double *)malloc(fft->local_n1 * n2 * n3 * sizeof(double));
+  double *buffer = (double *)malloc(2 * sizeof(double));
+
   /*
    * Now everything is defined: system size, diffusivity inside the system, and
    * the starting concentration
@@ -125,54 +127,57 @@ int main(int argc, char *argv[]) {
 
     for (int ipol = 1; ipol <= 3; ++ipol) {
       derivative(&fft_h, n1, n2, n3, L1, L2, L3, ipol, conc, aux1);
-      for (int i1 = 0; i1 < n1 * n2 * n3; ++i1) {
+      for (int i1 = 0; i1 < fft->local_n1 * n2 * n3; ++i1) {
         aux1[i1] *= diffusivity[i1];
       }
+
       derivative(&fft_h, n1, n2, n3, L1, L2, L3, ipol, aux1, aux2);
       // summing up contributions from the three spatial directions
-      for (int i1 = 0; i1 < n1 * n2 * n3; ++i1)
+      for (int i1 = 0; i1 < fft->local_n1 * n2 * n3; ++i1)
         dconc[i1] += aux2[i1];
     }
-    for (int i1 = 0; i1 < n1 * n2 * n3; ++i1)
+
+    for (int i1 = 0; i1 < fft->local_n1 * n2 * n3; ++i1)
       conc[i1] += dt * dconc[i1];
 
     if (istep % 30 == 1) {
       // Check the normalization of conc
-      ss = 0.;
-      double r2mean = 0.;
-      // HINT: the conc array is distributed, so only a part of it is on each
-      // processor
+      buffer[0] = 0.0; // ss
+      buffer[1] = 0.0; // r2mean
+
       for (int i3 = 0; i3 < n3; ++i3) {
-        x3 = L3 * ((double)i3) / n3 - 0.5 * L3;
+        double x3 = L3 * ((double)i3) / n3 - 0.5 * L3;
         for (int i2 = 0; i2 < n2; ++i2) {
-          x2 = L2 * ((double)i2) / n2 - 0.5 * L2;
-          for (int i1 = 0; i1 < n1; ++i1) {
+          double x2 = L2 * ((double)i2) / n2 - 0.5 * L2;
+          for (int i1 = 0; i1 < fft->local_n1; ++i1) {
             double x1 = L1 * ((double)i1) / n1 - 0.5 * L1;
             double rr = pow(x1, 2) + pow(x2, 2) + pow(x3, 2);
-            int index = index_f(i1, i2, i3, n1, n2, n3);
-            ss += conc[index];
-            r2mean += conc[index] * rr;
+            int index = index_f(i1, i2, i3, fft->local_n1, n2, n3);
+
+            buffer[0] += conc[index];
+            buffer[1] += conc[index] * rr;
           }
         }
       }
 
-      /*
-       * HINT: global values of ss and r2mean must be globally computed and
-       * distributed to all processes
-       *
-       */
-      ss *= fac;
-      r2mean *= fac;
+      MPI_Allreduce(&buffer, &buffer, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+      buffer[0] *= fac;
+      buffer[1] *= fac;
+
       double end = seconds();
       printf(" %d %17.15f %17.15f Elapsed time per iteration %f \n ", istep,
-             r2mean, ss, (end - start) / istep);
-      // HINT: Use parallel version of output routines
-      plot_data_2d("concentration", n1, n2, n3, 2, conc);
-      plot_data_1d("1d_conc", n1, n2, n3, 3, conc);
+             buffer[1], buffer[0], (end - start) / istep);
+
+      plot_data_2d("concentration", n1, n2, n3, fft->local_n1,
+                   fft->local_n1_offset, 2, conc);
+      plot_data_1d("1d_conc", n1, n2, n3, fft->local_n1, fft->local_n1_offset,
+                   3, conc);
     }
   }
 
   close_fftw(&fft_h);
+  free(buffer);
   free(diffusivity);
   free(conc);
   free(dconc);
