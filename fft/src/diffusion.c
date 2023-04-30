@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
   /*
    * initialize the fftw system and local dimension
    * as the value returned from the parallel FFT grid initializzation
-   *
    */
   init_fftw(&fft_h, n1, n2, n3, MPI_COMM_WORLD);
 
