@@ -13,9 +13,6 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
   fft->fftw_data =
       (fftw_complex *)fftw_malloc(fft->local_size_grid * sizeof(fftw_complex));
 
-  fft->fw_plan =
-      fftw_mpi_plan_dft_3d(n1, n2, n3, fft->fftw_data, fft->fftw_data,
-                           fft->mpi_comm, FFTW_FORWARD, FFTW_ESTIMATE);
   fft->bw_plan =
       fftw_mpi_plan_dft_3d(n1, n2, n3, fft->fftw_data, fft->fftw_data,
                            fft->mpi_comm, FFTW_BACKWARD, FFTW_ESTIMATE);
@@ -25,9 +22,7 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
 }
 
 void close_fftw(fftw_mpi_handler *fft) {
-
   fftw_destroy_plan(fft->bw_plan);
-  fftw_destroy_plan(fft->fw_plan);
   fftw_free(fft->fftw_data);
 
   cleanup_fft3d(fft->fft_3d_info);
