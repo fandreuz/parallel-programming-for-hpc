@@ -127,7 +127,7 @@ fftw_complex *fft_3d(double *data, struct DataInfo axis1Info, int n2, int n3) {
   fftw_free(fft_in);
   // fftw_free(fft_out_swap);
   fftw_free(exchanged);
-  fftw_free(fft_out_2);
+  fftw_free(fft_out2);
 
   return fft_out;
 }
