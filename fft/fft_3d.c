@@ -73,7 +73,7 @@ void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   }
 }
 
-void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
+void send_split(fftw_complex *data, fftw_complex *out, int n2,
                 int *axis1_counts, int *axis3_counts) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
@@ -123,9 +123,8 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
 
-  send_split(fft_3d_info->fft_1d_in, out, fft_3d_info->n3, fft_3d_info->n2,
-             fft_3d_info->n1, fft_3d_info->axis3_counts,
-             fft_3d_info->axis1_counts);
+  send_split(fft_3d_info->fft_1d_in, out fft_3d_info->n2,
+             fft_3d_info->axis3_counts, fft_3d_info->axis1_counts);
 }
 
 void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
