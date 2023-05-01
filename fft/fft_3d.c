@@ -10,8 +10,6 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   int div = n1 / nProcesses;
   int res = n1 % nProcesses;
 
-  struct Fft3dInfo info;
-
   info->n1 = n1;
   info->loc_n1 = div + locRank < res;
   info->loc_n1_offset = div * locRank + MIN(locRank, res);
