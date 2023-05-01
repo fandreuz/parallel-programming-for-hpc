@@ -16,26 +16,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-double seconds() {
-  /* Return the second elapsed since Epoch (00:00:00 UTC, January 1, 1970) */
-  struct timeval tmp;
-  double sec;
-  gettimeofday(&tmp, (struct timezone *)0);
-  sec = tmp.tv_sec + ((double)tmp.tv_usec) / 1000000.0;
-  return sec;
-}
-
-/*
- *  Index linearization is computed following row-major order.
- *  For more informtion see FFTW documentation:
- *  http://www.fftw.org/doc/Row_002dmajor-Format.html#Row_002dmajor-Format
- *
- */
-int index_f(int i1, int i2, int i3, int n1, int n2, int n3) {
-
-  return n3 * n2 * i1 + n3 * i2 + i3;
-}
-
 void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
 
   /*
@@ -72,6 +52,8 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
   fft->bw_plan =
       fftw_mpi_plan_dft_3d(n1, n2, n3, fft->fftw_data, fft->fftw_data,
                            fft->mpi_comm, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+  fft->fft_3d_info = setup_fft3d(n1, n2, n3);
 }
 
 void close_fftw(fftw_mpi_handler *fft) {
