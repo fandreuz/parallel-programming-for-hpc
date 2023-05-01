@@ -24,22 +24,22 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
 
   // compute portion of axis for each processor, on axis 1 and 3
 
-  int *axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
+  info->axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
   int div_n1 = n1 / nProcesses;
   for (int i = 0; i < n3 % nProcesses; ++i) {
-    axis1_counts[i] = div_n1 + 1;
+    info->axis1_counts[i] = div_n1 + 1;
   }
   for (int i = n1 % nProcesses; i < nProcesses; ++i) {
-    axis1_counts[i] = div_n1;
+    info->axis1_counts[i] = div_n1;
   }
 
-  int *axis3_counts = (int *)malloc(sizeof(int) * nProcesses);
+  info->axis3_counts = (int *)malloc(sizeof(int) * nProcesses);
   int div_n3 = n3 / nProcesses;
   for (int i = 0; i < n3 % nProcesses; ++i) {
-    axis3_counts[i] = div_n3 + 1;
+    info->axis3_counts[i] = div_n3 + 1;
   }
   for (int i = n3 % nProcesses; i < nProcesses; ++i) {
-    axis3_counts[i] = div_n3;
+    info->axis3_counts[i] = div_n3;
   }
 
   // compute send/recv_counts/displacements
@@ -47,11 +47,11 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   info->send_counts = (int *)malloc(sizeof(int) * nProcesses);
   info->send_displacements = (int *)malloc(sizeof(int) * nProcesses);
 
-  int slice_size = axis1_counts[locRank] * n2;
-  info->send_counts[0] = axis3_counts[0] * slice_size;
+  int slice_size = info->axis1_counts[locRank] * n2;
+  info->send_counts[0] = info->axis3_counts[0] * slice_size;
   info->send_displacements[0] = 0;
   for (int i = 1; i < nProcesses; ++i) {
-    info->send_counts[i] = axis3_counts[i] * slice_size;
+    info->send_counts[i] = info->axis3_counts[i] * slice_size;
     info->send_displacements[i] =
         info->send_counts[i - 1] + info->send_displacements[i - 1];
   }
@@ -59,11 +59,11 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   info->recv_counts = (int *)malloc(sizeof(int) * nProcesses);
   info->recv_displacements = (int *)malloc(sizeof(int) * nProcesses);
 
-  int recv_slice_size = axis3_counts[locRank] * n2;
-  info->recv_counts[0] = axis1_counts[0] * recv_slice_size;
+  int recv_slice_size = info->axis3_counts[locRank] * n2;
+  info->recv_counts[0] = info->axis1_counts[0] * recv_slice_size;
   info->recv_displacements[0] = 0;
   for (int i = 1; i < nProcesses; ++i) {
-    info->recv_counts[i] = axis1_counts[i] * recv_slice_size;
+    info->recv_counts[i] = info->axis1_counts[i] * recv_slice_size;
     info->recv_displacements[i] =
         info->recv_counts[i - 1] + info->recv_displacements[i - 1];
   }
@@ -183,7 +183,7 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_out, fft_3d_info);
   rectify_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in,
             fft_3d_info->loc_n3, fft_3d_info->n2, fft_3d_info->n1,
-            fft_3d_info->nProcesses);
+            fft_3d_info->axis1_counts, fft_3d_info->nProcesses);
 
   fftw_execute(fft_3d_info->ifft_1d_many);
 
@@ -192,7 +192,7 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_2d_in, fft_3d_info);
   rectify_3(fft_3d_info->fft_2d_in, fft_3d_info->fft_2d_out,
             fft_3d_info->loc_n1, fft_3d_info->n2, fft_3d_info->n3,
-            fft_3d_info->nProcesses);
+            fft_3d_info->axis3_counts, fft_3d_info->nProcesses);
 
   double fac = 1.0 / (fft_3d_info->n1 * fft_3d_info->n2 * fft_3d_info->n3);
   for (int i = 0; i < loc_grid_size; ++i) {
