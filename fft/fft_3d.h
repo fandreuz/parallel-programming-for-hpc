@@ -16,8 +16,10 @@ struct Fft3dInfo {
   fftw_plan *fft_2d_many;
   fftw_plan *fft_1d_many;
 
-  fftw_complex *fft_2d_in, fft_2d_out;
-  fftw_complex *fft_1d_in, fft_1d_out;
+  fftw_complex *fft_2d_in;
+  fftw_complex *fft_2d_out;
+  fftw_complex *fft_1d_in;
+  fftw_complex *fft_1d_out;
 
   int *axis1_counts, axis3_counts;
 };
