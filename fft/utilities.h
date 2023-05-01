@@ -17,6 +17,8 @@ struct Fft3dInfo {
 
   fftw_plan fft_2d_many;
   fftw_plan fft_1d_many;
+  fftw_plan ifft_2d_many;
+  fftw_plan ifft_1d_many;
 
   fftw_complex *fft_2d_in;
   fftw_complex *fft_2d_out;
