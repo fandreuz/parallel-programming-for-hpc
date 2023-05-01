@@ -10,7 +10,7 @@ struct DataInfo setup_fft_3d(int n1) {
   int div = n1 / nProcesses;
   int res = n1 % nProcesses;
 
-  DataInfo info;
+  struct DataInfo info;
   info.loc_n1 = div + locRank < res;
   info.loc_n1_offset = div * locRank + MIN(locRank, res);
   return info;
@@ -31,6 +31,7 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
 
+  int *axis1_counts = (int *)malloc(sizeof(int) nProcesses);
   int div_n1 = n1 / nProcesses;
   for (int i = 0; i < n3 % nProcesses; ++i) {
     axis1_counts[i] = div_n1 + 1;
@@ -39,6 +40,7 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
     axis1_counts[i] = div_n1;
   }
 
+  int *axis3_counts = (int *)malloc(sizeof(int) nProcesses);
   int div_n3 = n3 / nProcesses;
   for (int i = 0; i < n3 % nProcesses; ++i) {
     axis3_counts[i] = div_n3 + 1;
@@ -47,7 +49,6 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
     axis3_counts[i] = div_n3;
   }
 
-  int *axis3_counts = (int *)malloc(sizeof(int) nProcesses);
   int *send_counts = (int *)malloc(sizeof(int) nProcesses);
   int *send_displacements = (int *)malloc(sizeof(int) nProcesses);
 
@@ -59,7 +60,6 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
     send_displacements[i] = send_counts[i] + send_displacements[i - 1];
   }
 
-  int *axis1_counts = (int *)malloc(sizeof(int) nProcesses);
   int *recv_counts = (int *)malloc(sizeof(int) nProcesses);
   int *recv_displacements = (int *)malloc(sizeof(int) nProcesses);
 
