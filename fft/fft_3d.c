@@ -16,7 +16,7 @@ struct DataInfo setup_fft_3d(int n1) {
   return info;
 }
 
-void *swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
+void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   for (int i1 = 0; i1 < n1; ++i1) {
     for (int i2 = 0; i2 < n2; ++i2) {
       for (int i3 = 0; i3 < n3; ++i3) {
@@ -114,7 +114,7 @@ fftw_complex *fft_3d(double *data, struct DataInfo axis1Info, int n2, int n3) {
   fftw_complex *fft_out2 =
       (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
 
-  int fft2_plan_size = {n1};
+  int fft2_plan_size[] = {n1};
   fftw_plan many_dft_plan2 = fftw_plan_many_dft(
       1, fft2_plan_size, n2 * newLocN3, exchanged, NULL, 1, fft2_plan_size[0],
       fft_out2, NULL, 1, fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
