@@ -53,7 +53,8 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
       fftw_mpi_plan_dft_3d(n1, n2, n3, fft->fftw_data, fft->fftw_data,
                            fft->mpi_comm, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-  fft->fft_3d_info = setup_fft3d(n1, n2, n3);
+  fft->fft_3d_info = (struct Fft3dInfo *)malloc(sizeof(struct Fft3dInfo));
+  setup_fft3d(fft->fft_3d_info, n1, n2, n3);
 }
 
 void close_fftw(fftw_mpi_handler *fft) {
@@ -63,6 +64,7 @@ void close_fftw(fftw_mpi_handler *fft) {
   fftw_free(fft->fftw_data);
 
   cleanup_fft3d(fft->fft_3d_info);
+  free(fft->fft_3d_info);
 }
 
 /* This subroutine uses fftw to calculate 3-dimensional discrete FFTs.
