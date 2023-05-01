@@ -57,10 +57,11 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   info->recv_counts = (int *)malloc(sizeof(int) * nProcesses);
   info->recv_displacements = (int *)malloc(sizeof(int) * nProcesses);
 
-  info->recv_counts[0] = axis1_counts[0] * axis3_counts[0] * n2;
+  int recv_slice_size = axis3_counts[locRank] * n2;
+  info->recv_counts[0] = axis1_counts[0] * recv_slice_size;
   info->recv_displacements[0] = 0;
   for (int i = 1; i < nProcesses; ++i) {
-    info->recv_counts[i] = axis1_counts[i] * axis3_counts[i] * n2;
+    info->recv_counts[i] = axis1_counts[i] * axis3_counts[locRank] * n2;
     info->recv_displacements[i] =
         info->recv_counts[i - 1] + info->recv_displacements[i - 1];
   }
