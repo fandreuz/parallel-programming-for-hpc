@@ -57,8 +57,8 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
 
   int fft2_plan_size[] = {n1};
   info.fft_1d_many =
-      fftw_plan_many_dft(1, fft2_plan_size, n2 * newLocN3, info.fft_1d_in, NULL,
-                         1, fft2_plan_size[0], info.fft_1d_out, NULL, 1,
+      fftw_plan_many_dft(1, fft2_plan_size, n2 * info.loc_n3, info.fft_1d_in,
+                         NULL, 1, fft2_plan_size[0], info.fft_1d_out, NULL, 1,
                          fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
 
   return info;
