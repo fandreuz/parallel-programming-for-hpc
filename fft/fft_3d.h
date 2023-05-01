@@ -22,6 +22,6 @@ struct Fft3dInfo {
 };
 
 struct Fft3dInfo setup_fft3d(int n1, int n2, int n3);
-void fft_3d(double *data, double *out, struct Fft3dInfo fft_3d_info, int n2,
+void fft_3d(double *data, double *out, struct Fft3dInfo *fft_3d_info, int n2,
             int n3);
 void cleanup_fft3d(Fft3dInfo fft_3d_info);
