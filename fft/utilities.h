@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <fftw3.h>
 #include <mpi.h>
+#include <string.h>
 
 struct Fft3dInfo {
   int n1;
