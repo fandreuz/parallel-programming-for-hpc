@@ -49,7 +49,7 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
       fft_plan_size[0] * fft_plan_size[1], info.fft_2d_out, NULL, 1,
       fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
 
-  int newBlockSize = info.loc_n3 * n2 * fft_3d_info.n1;
+  int newBlockSize = info.loc_n3 * n2 * info.n1;
   info.fft_1d_in =
       (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
   info.fft_1d_out =
@@ -109,22 +109,22 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
 void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   for (int i = 0; i < fft_3d_info->loc_n1 * fft_3d_info->n2 * fft_3d_info->n3;
        i++) {
-    fft_in[i] = data[i] + 0.0 * I;
+    fft_3d_info->fft_2d_in[i] = data[i] + 0.0 * I;
   }
   fftw_execute(info->fft_2d_many);
   // swap fft_2d_out into fft_2d_in
-  swap_1_3(info->fft_2d_out, info->fft_2d_in, fft_3d_info->loc_n1,
+  swap_1_3(fft_3d_info->fft_2d_out, fft_3d_info->fft_2d_in, fft_3d_info->loc_n1,
            fft_3d_info->n2, fft_3d_info->n3);
 
-  send_split(info->fft_2d_in, info->fft_1d_in, fft_3d_info->n1, fft_3d_info->n2,
-             fft_3d_info->n3, fft_3d_info->axis1_counts,
+  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_in, fft_3d_info->n1,
+             fft_3d_info->n2, fft_3d_info->n3, fft_3d_info->axis1_counts,
              fft_3d_info->axis3_counts);
-  fftw_execute(info->fft_1d_many);
+  fftw_execute(fft_3d_info->fft_1d_many);
 
-  swap_1_3(info->fft_1d_out, info->fft_1d_in, info.loc_n3, fft_3d_info->n2,
-           fft_3d_info->n1);
+  swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info.loc_n3,
+           fft_3d_info->n2, fft_3d_info->n1);
 
-  send_split(info->fft_1d_in, out, fft_3d_info->n3, fft_3d_info->n2,
+  send_split(fft_3d_info->fft_1d_in, out, fft_3d_info->n3, fft_3d_info->n2,
              fft_3d_info->n1, fft_3d_info->axis3_counts,
              fft_3d_info->axis1_counts);
 }
