@@ -103,7 +103,7 @@ void send_split(fftw_complex *data, fftw_complex *out, int n2,
   MPI_Datatype fftw_complex_mpi;
   MPI_Type_contiguous(2, MPI_DOUBLE, &fftw_complex_mpi);
   MPI_Type_commit(&fftw_complex_mpi);
-  
+
   MPI_Alltoallv(data, send_counts, send_displacements, fftw_complex_mpi, out,
                 recv_counts, recv_displacements, fftw_complex_mpi,
                 MPI_COMM_WORLD);
