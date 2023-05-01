@@ -2,7 +2,7 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-DataInfo setup_fft_3d(int n1) {
+struct DataInfo setup_fft_3d(int n1) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
