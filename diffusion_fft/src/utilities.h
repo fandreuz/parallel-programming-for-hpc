@@ -28,7 +28,7 @@ typedef struct {
 
 } fftw_mpi_handler;
 
-#endif MPI_HANDLER_TYPE
+#endif
 
 inline double seconds() {
 
