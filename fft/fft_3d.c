@@ -166,6 +166,8 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
 void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
   fftw_destroy_plan(fft_3d_info->fft_2d_many);
   fftw_destroy_plan(fft_3d_info->fft_1d_many);
+  fftw_destroy_plan(fft_3d_info->ifft_2d_many);
+  fftw_destroy_plan(fft_3d_info->ifft_1d_many);
 
   fftw_free(fft_3d_info->fft_2d_in);
   fftw_free(fft_3d_info->fft_2d_out);
