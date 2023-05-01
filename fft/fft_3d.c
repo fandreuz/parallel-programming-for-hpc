@@ -170,7 +170,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
            fft_3d_info->n2, fft_3d_info->n1);
   send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_2d_in, fft_3d_info);
   rectify_3(fft_3d_info->fft_2d_in, out, fft_3d_info->loc_n1, fft_3d_info->n2,
-            fft_3d_info->n3, ffcomt_3d_info->axis3_counts,
+            fft_3d_info->n3, fft_3d_info->axis3_counts,
             fft_3d_info->nProcesses);
 }
 
