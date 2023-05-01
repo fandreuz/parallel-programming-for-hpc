@@ -28,8 +28,8 @@ struct Fft3dInfo {
   fftw_complex *fft_1d_in;
   fftw_complex *fft_1d_out;
 
-  int *axis1_counts
-  int *axis3_counts
+  int *axis1_counts;
+  int *axis3_counts;
 
   int *send_counts;
   int *send_displacements;
