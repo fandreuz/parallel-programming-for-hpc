@@ -51,7 +51,7 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   for (int i = 1; i < nProcesses; ++i) {
     info->send_counts[i] = axis3_counts[i] * slice_size;
     info->send_displacements[i] =
-        info->send_counts[i] + info->send_displacements[i - 1];
+        info->send_counts[i - 1] + info->send_displacements[i - 1];
   }
 
   info->recv_counts = (int *)malloc(sizeof(int) * nProcesses);
@@ -62,7 +62,7 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   for (int i = 1; i < nProcesses; ++i) {
     info->recv_counts[i] = axis1_counts[i] * axis3_counts[i] * n2;
     info->recv_displacements[i] =
-        info->recv_counts[i] + info->recv_displacements[i - 1];
+        info->recv_counts[i - 1] + info->recv_displacements[i - 1];
   }
 
   // initialize FFTW in/out buffers
