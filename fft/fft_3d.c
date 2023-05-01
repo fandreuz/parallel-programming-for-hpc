@@ -140,7 +140,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
 
 void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   int loc_grid_size = fft_3d_info->loc_n1 * fft_3d_info->n2 * fft_3d_info->n3;
-  memcpy(fft->fft_2d_in, data, loc_grid_size * sizeof(fftw_complex));
+  memcpy(fft_3d_info->fft_2d_in, data, loc_grid_size * sizeof(fftw_complex));
 
   fftw_execute(fft_3d_info->ifft_2d_many);
   // swap fft_2d_out into fft_2d_in
@@ -157,8 +157,8 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   send_split(fft_3d_info->fft_1d_in, fft_3d_info->fft_1d_out, fft_3d_info->n2,
              fft_3d_info->axis3_counts, fft_3d_info->axis1_counts);
 
-  double fac = 1.0 / (fft->n1 * fft->n2 * fft->n3);
-  for (int i = 0; i < local_size_grid; ++i) {
+  double fac = 1.0 / (fft_3d_info->n1 * fft_3d_info->n2 * fft_3d_info->n3);
+  for (int i = 0; i < loc_grid_size; ++i) {
     out[i] = creal(fft_3d_info->fft_1d_out[i]) * fac;
   }
 }
