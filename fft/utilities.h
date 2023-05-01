@@ -25,7 +25,7 @@ typedef struct {
   ptrdiff_t local_n1_offset;
   MPI_Comm mpi_comm;
 
-  Fft3dInfo *fft_3d_info;
+  struct Fft3dInfo *fft_3d_info;
 
 } fftw_mpi_handler;
 
