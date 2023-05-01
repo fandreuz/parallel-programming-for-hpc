@@ -4,6 +4,28 @@
 #include <fftw3.h>
 #include <mpi.h>
 
+struct Fft3dInfo {
+  int n1;
+  int loc_n1;
+  int loc_n1_offset;
+
+  int n2;
+
+  int n3;
+  int loc_n3;
+
+  fftw_plan fft_2d_many;
+  fftw_plan fft_1d_many;
+
+  fftw_complex *fft_2d_in;
+  fftw_complex *fft_2d_out;
+  fftw_complex *fft_1d_in;
+  fftw_complex *fft_1d_out;
+
+  int *axis1_counts;
+  int *axis3_counts;
+};
+
 typedef struct {
 
   fftw_plan fw_plan;
