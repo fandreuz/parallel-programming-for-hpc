@@ -1,6 +1,7 @@
 #include <complex.h>
 #include <fftw3.h>
 #include <mpi.h>
+#include <stdlib.h>
 
 struct DataInfo {
     int n1;
