@@ -10,7 +10,7 @@ OBJ = $(SRC:.c=.o)
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	$(CC) $^ $(LIBS) -o $@
+	$(CC) *.o $(LIBS) -o $@
 
 %.o : %.c $(HEAD)
 	$(CC) $(CFLAGS) -c $<
