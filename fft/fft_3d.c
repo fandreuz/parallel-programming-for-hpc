@@ -44,7 +44,7 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
       (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * oldBlockSize);
 
   int fft_plan_size[] = {n2, n3};
-  info->fft_2d_many = many_dft_plan = fftw_plan_many_dft(
+  info.fft_2d_many = fftw_plan_many_dft(
       2, fft_plan_size, info.loc_n1, info.fft_2d_in, NULL, 1,
       fft_plan_size[0] * fft_plan_size[1], info.fft_2d_out, NULL, 1,
       fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
@@ -56,7 +56,7 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
       (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
 
   int fft2_plan_size[] = {n1};
-  info->fft_1d_many = =
+  info.fft_1d_many =
       fftw_plan_many_dft(1, fft2_plan_size, n2 * newLocN3, info.fft_1d_in, NULL,
                          1, fft2_plan_size[0], info.fft_1d_out, NULL, 1,
                          fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
@@ -75,7 +75,7 @@ void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
 }
 
 void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
-                int *axis1_counts, int *axis2_counts) {
+                int *axis1_counts, int *axis3_counts) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
