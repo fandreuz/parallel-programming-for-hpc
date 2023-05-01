@@ -17,7 +17,8 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
 
   info->n2 = n2;
   info->n3 = n3;
-  info->loc_n3 = n3 / nProcesses + n3 < (n3 % nProcesses);
+  info->loc_n3 = n3 / nProcesses;
+  info->loc_n3 += locRank < (n3 % nProcesses);
 
   info->axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
   int div_n1 = n1 / nProcesses;
