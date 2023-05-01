@@ -2,7 +2,7 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-struct DataInfo setup_fft_3d(int n1) {
+struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
@@ -10,9 +10,54 @@ struct DataInfo setup_fft_3d(int n1) {
   int div = n1 / nProcesses;
   int res = n1 % nProcesses;
 
-  struct DataInfo info;
+  struct Fft3dInfo info;
+
   info.loc_n1 = div + locRank < res;
   info.loc_n1_offset = div * locRank + MIN(locRank, res);
+  info.loc_n3 = n3 / nProcesses + n3 < (n3 % nProcesses);
+
+  info.axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
+  int div_n1 = n1 / nProcesses;
+  for (int i = 0; i < n3 % nProcesses; ++i) {
+    info.axis1_counts[i] = div_n1 + 1;
+  }
+  for (int i = n1 % nProcesses; i < nProcesses; ++i) {
+    info.axis1_counts[i] = div_n1;
+  }
+
+  info.axis3_counts = (int *)malloc(sizeof(int) * nProcesses);
+  int div_n3 = n3 / nProcesses;
+  for (int i = 0; i < n3 % nProcesses; ++i) {
+    info.axis3_counts[i] = div_n3 + 1;
+  }
+  for (int i = n3 % nProcesses; i < nProcesses; ++i) {
+    info.axis3_counts[i] = div_n3;
+  }
+
+  int oldBlockSize = info.loc_n1 * n2 * n3;
+  info.fft_2d_in =
+      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * oldBlockSize);
+  info.fft_2d_out =
+      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * oldBlockSize);
+
+  int fft_plan_size[] = {n2, n3};
+  info->fft_2d_many = many_dft_plan = fftw_plan_many_dft(
+      2, fft_plan_size, info.loc_n1, info.fft_2d_in, NULL, 1,
+      fft_plan_size[0] * fft_plan_size[1], info.fft_2d_out, NULL, 1,
+      fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
+
+  int newBlockSize = info.loc_n3 * n2 * fft_3d_info.n1;
+  info.fft_1d_in =
+      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
+  info.fft_1d_out =
+      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
+
+  int fft2_plan_size[] = {n1};
+  info->fft_1d_many = =
+      fftw_plan_many_dft(1, fft2_plan_size, n2 * newLocN3, info.fft_1d_in, NULL,
+                         1, fft2_plan_size[0], info.fft_1d_out, NULL, 1,
+                         fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
+
   return info;
 }
 
@@ -26,28 +71,11 @@ void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   }
 }
 
-void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
+void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
+                int *axis1_counts, int *axis2_counts) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
-
-  int *axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
-  int div_n1 = n1 / nProcesses;
-  for (int i = 0; i < n3 % nProcesses; ++i) {
-    axis1_counts[i] = div_n1 + 1;
-  }
-  for (int i = n1 % nProcesses; i < nProcesses; ++i) {
-    axis1_counts[i] = div_n1;
-  }
-
-  int *axis3_counts = (int *)malloc(sizeof(int) * nProcesses);
-  int div_n3 = n3 / nProcesses;
-  for (int i = 0; i < n3 % nProcesses; ++i) {
-    axis3_counts[i] = div_n3 + 1;
-  }
-  for (int i = n3 % nProcesses; i < nProcesses; ++i) {
-    axis3_counts[i] = div_n3;
-  }
 
   int *send_counts = (int *)malloc(sizeof(int) * nProcesses);
   int *send_displacements = (int *)malloc(sizeof(int) * nProcesses);
@@ -75,59 +103,35 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
                 MPI_COMM_WORLD);
 }
 
-fftw_complex *fft_3d(double *data, struct DataInfo axis1Info, int n2, int n3) {
-  int n1 = axis1Info.n1;
-  int loc_n1 = axis1Info.loc_n1;
-
-  int N = loc_n1 * n2 * n3;
-  fftw_complex *fft_in = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * N);
-  fftw_complex *fft_out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * N);
-
-  int fft_plan_size[] = {n2, n3};
-  fftw_plan many_dft_plan = fftw_plan_many_dft(
-      2, fft_plan_size, loc_n1, fft_in, NULL, 1,
-      fft_plan_size[0] * fft_plan_size[1], fft_out, NULL, 1,
-      fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
-
-  for (int i = 0; i < loc_n1 * n2 * n3; i++) {
+fftw_complex *fft_3d(double *data, struct Fft3dInfo fft_3d_info, int n2,
+                     int n3) {
+  for (int i = 0; i < fft_3d_info.loc_n1 * n2 * n3; i++) {
     fft_in[i] = data[i] + 0.0 * I;
   }
+  fftw_execute(info->fft_2d_many);
+  // swap fft_2d_out into fft_2d_in
+  swap_1_3(info->fft_2d_out, info->fft_2d_in, fft_3d_info.loc_n1, n2, n3);
 
-  fftw_execute(many_dft_plan);
-  fftw_destroy_plan(many_dft_plan);
+  send_split(info->fft_2d_in, info->fft_1d_in, fft_3d_info.n1, n2, n3,
+             fft_3d_info.axis1_counts, fft_3d_info.axis3_counts);
+  fftw_execute(info->fft_1d_many);
 
-  // fft_in is reused
-  fftw_complex *fft_out_swap = fft_in;
-  swap_1_3(fft_out, fft_out_swap, loc_n1, n2, n3);
+  swap_1_3(info->fft_1d_out, info->fft_1d_in, info.loc_n3, n2, fft_3d_info.n1);
 
-  int locRank, nProcesses;
-  MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
-  int newLocN3 = n3 / nProcesses + n3 < (n3 % nProcesses);
-  int newBlockSize = newLocN3 * n2 * n1;
+  fftw_complex *fft_3d_out = (fftw_complex *)fftw_malloc(
+      sizeof(fftw_complex) * fft_3d_info.loc_n1 * n2 * n3);
+  send_split(info->fft_1d_in, fft_3d_out, n3, n2, fft_3d_info.n1,
+             fft_3d_info.axis3_counts, fft_3d_info.axis1_counts);
 
-  // axis3 - axis 2 - axis 1
-  fftw_complex *exchanged =
-      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
-  send_split(fft_out_swap, exchanged, n1, n2, n3);
+  return fft_3d_out;
+}
 
-  fftw_complex *fft_out2 =
-      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * newBlockSize);
+void cleanup_fft3d(Fft3dInfo fft_3d_info) {
+  fftw_destroy_plan(info->fft_2d_many);
+  fftw_destroy_plan(info->fft_1d_many);
 
-  int fft2_plan_size[] = {n1};
-  fftw_plan many_dft_plan2 = fftw_plan_many_dft(
-      1, fft2_plan_size, n2 * newLocN3, exchanged, NULL, 1, fft2_plan_size[0],
-      fft_out2, NULL, 1, fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
-  fftw_execute(many_dft_plan2);
-  fftw_destroy_plan(many_dft_plan2);
-
-  swap_1_3(fft_out2, exchanged, newLocN3, n2, n1);
-  send_split(exchanged, fft_out, n1, n2, n3);
-
-  fftw_free(fft_in);
-  // fftw_free(fft_out_swap);
-  fftw_free(exchanged);
-  fftw_free(fft_out2);
-
-  return fft_out;
+  fftw_free(info.fft_2d_in);
+  fftw_free(info.fft_2d_out);
+  fftw_free(info.fft_1d_in);
+  fftw_free(info.fft_1d_out);
 }
