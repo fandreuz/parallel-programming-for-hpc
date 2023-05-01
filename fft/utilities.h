@@ -1,5 +1,9 @@
 #pragma once
 
+#include <fftw3.h>
+#include <mpi.h>
+#include "fft_3d.h"
+
 typedef struct {
 
   fftw_plan fw_plan;
@@ -17,4 +21,3 @@ typedef struct {
 #define MPI_HANDLER_TYPE 0
 
 #include "../diffusion_fft/src/utilities.h"
-#include "fft_3d.h"
