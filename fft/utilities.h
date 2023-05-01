@@ -1,8 +1,4 @@
 #pragma once
-#include "../diffusion_fft/src/utilities.h"
-#include "fft_3d.h"
-
-#define MPI_HANDLER_TYPE 0
 
 typedef struct {
 
@@ -18,3 +14,7 @@ typedef struct {
   struct Fft3dInfo fft_3d_info;
 
 } fftw_mpi_handler;
+#define MPI_HANDLER_TYPE 0
+
+#include "../diffusion_fft/src/utilities.h"
+#include "fft_3d.h"
