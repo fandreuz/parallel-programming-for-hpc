@@ -162,7 +162,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_out, fft_3d_info);
   rectify_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in,
             fft_3d_info->loc_n3, fft_3d_info->n2, fft_3d_info->n1,
-            ffcomt_3d_info->axis1_counts, fft_3d_info->nProcesses);
+            fft_3d_info->axis1_counts, fft_3d_info->nProcesses);
 
   fftw_execute(fft_3d_info->fft_1d_many);
 
@@ -184,7 +184,7 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_out, fft_3d_info);
   rectify_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in,
             fft_3d_info->loc_n3, fft_3d_info->n2, fft_3d_info->n1,
-            ffcomt_3d_info->axis1_counts, fft_3d_info->nProcesses);
+            fft_3d_info->axis1_counts, fft_3d_info->nProcesses);
 
   fftw_execute(fft_3d_info->ifft_1d_many);
 
