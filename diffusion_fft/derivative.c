@@ -41,9 +41,9 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
     for (i1 = 0; i1 < fft->local_n1; ++i1) {
 
       i = i1 + fft->local_n1_offset;
-      if (i1 > n1 / 2)
-        i = i1 - n1;
-      if (i1 == n1 / 2)
+      if (i > n1 / 2)
+        i = i - n1;
+      if (i == n1 / 2)
         i = 0;
 
       for (i2 = 0; i2 < n2; ++i2) {
@@ -61,9 +61,9 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
     for (i2 = 0; i2 < n2; ++i2) {
 
       i = i2;
-      if (i2 > n2 / 2)
-        i = i2 - n2;
-      if (i2 == n2 / 2)
+      if (i > n2 / 2)
+        i = i - n2;
+      if (i == n2 / 2)
         i = 0;
 
       for (i1 = 0; i1 < fft->local_n1; ++i1) {
@@ -81,9 +81,9 @@ void derivative(fftw_mpi_handler *fft, int n1, int n2, int n3, double L1,
     for (i3 = 0; i3 < n3; ++i3) {
 
       i = i3;
-      if (i3 > n3 / 2)
-        i = i3 - n3;
-      if (i3 == n3 / 2)
+      if (i > n3 / 2)
+        i = i - n3;
+      if (i == n3 / 2)
         i = 0;
 
       for (i1 = 0; i1 < fft->local_n1; ++i1) {
