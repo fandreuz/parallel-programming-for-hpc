@@ -2,7 +2,7 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-void setup_fft3d(Fft3dInfo *info, int n1, int n2, int n3) {
+void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   int locRank, nProcesses;
   MPI_Comm_rank(MPI_COMM_WORLD, &locRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
@@ -130,7 +130,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
              fft_3d_info->axis1_counts);
 }
 
-void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
+void cleanup_fft3d(struct struct Fft3dInfo *fft_3d_info) {
   fftw_destroy_plan(fft_3d_info->fft_2d_many);
   fftw_destroy_plan(fft_3d_info->fft_1d_many);
 
