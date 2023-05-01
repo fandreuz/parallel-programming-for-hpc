@@ -108,12 +108,8 @@ void send_split(fftw_complex *data, fftw_complex *out, int n2,
     recv_displacements[i] = recv_counts[i] + recv_displacements[i - 1];
   }
 
-  MPI_Datatype fftw_complex_mpi;
-  MPI_Type_contiguous(2, MPI_DOUBLE, &fftw_complex_mpi);
-  MPI_Type_commit(&fftw_complex_mpi);
-
-  MPI_Alltoallv(data, send_counts, send_displacements, fftw_complex_mpi, out,
-                recv_counts, recv_displacements, fftw_complex_mpi,
+  MPI_Alltoallv(data, send_counts, send_displacements, MPI_C_DOUBLE_COMPLEX, ,
+                out, recv_counts, recv_displacements, MPI_C_DOUBLE_COMPLEX, ,
                 MPI_COMM_WORLD);
 }
 
