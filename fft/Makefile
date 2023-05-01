@@ -13,7 +13,7 @@ $(EXE): $(OBJ)
 	$(CC) *.o $(LIBS) -o $@
 
 %.o : %.c $(HEAD)
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -include $(HEAD) -c $<
 
 flush:
 	rm -f *.dat
