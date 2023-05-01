@@ -120,6 +120,14 @@ void send_split(fftw_complex *data, fftw_complex *out,
                 MPI_COMM_WORLD);
 }
 
+void send_split_back(fftw_complex *data, fftw_complex *out,
+                     struct Fft3dInfo *fft_3d_info) {
+  MPI_Alltoallv(data, fft_3d_info->recv_counts, fft_3d_info->recv_displacements,
+                MPI_C_DOUBLE_COMPLEX, out, fft_3d_info->send_counts,
+                fft_3d_info->send_displacements, MPI_C_DOUBLE_COMPLEX,
+                MPI_COMM_WORLD);
+}
+
 void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   for (int i = 0; i < fft_3d_info->loc_n1 * fft_3d_info->n2 * fft_3d_info->n3;
        i++) {
@@ -136,7 +144,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
 
-  send_split(fft_3d_info->fft_1d_in, out, fft_3d_info);
+  send_split_back(fft_3d_info->fft_1d_in, out, fft_3d_info);
 }
 
 void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
@@ -154,7 +162,7 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
 
-  send_split(fft_3d_info->fft_1d_in, fft_3d_info->fft_1d_out, fft_3d_info);
+  send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_1d_out, fft_3d_info);
 
   double fac = 1.0 / (fft_3d_info->n1 * fft_3d_info->n2 * fft_3d_info->n3);
   for (int i = 0; i < loc_grid_size; ++i) {
