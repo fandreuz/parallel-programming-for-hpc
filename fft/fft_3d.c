@@ -26,7 +26,7 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
 
   info->axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
   int div_n1 = n1 / nProcesses;
-  for (int i = 0; i < n3 % nProcesses; ++i) {
+  for (int i = 0; i < n1 % nProcesses; ++i) {
     info->axis1_counts[i] = div_n1 + 1;
   }
   for (int i = n1 % nProcesses; i < nProcesses; ++i) {
@@ -113,9 +113,11 @@ void rectify_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
     int i3_count = n3_counts[proc];
 
     for (int i1 = 0; i1 < n1; ++i1) {
+      fftw_complex *i1_loc_out = out + i1 * n3 * n2;
       for (int i2 = 0; i2 < n2; ++i2) {
+        fftw_complex *i2_loc_out = i1_loc_out + i2 * n3;
         for (int i3 = i3_start; i3 < i3_start + i3_count; ++i3) {
-          out[i3 + i2 * n3 + i1 * n3 * n2] = *(data_walking++);
+          i2_loc_out[i3] = *(data_walking++);
         }
       }
     }
