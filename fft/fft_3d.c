@@ -59,8 +59,6 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
       1, fft2_plan_size, n2 * info->loc_n3, info->fft_1d_in, fft2_plan_size, 1,
       fft2_plan_size[0], info->fft_1d_out, fft2_plan_size, 1, fft2_plan_size[0],
       FFTW_FORWARD, FFTW_ESTIMATE);
-
-  return info;
 }
 
 void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
@@ -128,7 +126,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
              fft_3d_info->axis1_counts);
 }
 
-void cleanup_fft3d(struct struct Fft3dInfo *fft_3d_info) {
+void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
   fftw_destroy_plan(fft_3d_info->fft_2d_many);
   fftw_destroy_plan(fft_3d_info->fft_1d_many);
 
