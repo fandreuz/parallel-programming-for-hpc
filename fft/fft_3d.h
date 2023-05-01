@@ -13,8 +13,8 @@ struct Fft3dInfo {
   int n3;
   int loc_n3;
 
-  fftw_plan *fft_2d_many;
-  fftw_plan *fft_1d_many;
+  fftw_plan fft_2d_many;
+  fftw_plan fft_1d_many;
 
   fftw_complex *fft_2d_in;
   fftw_complex *fft_2d_out;
