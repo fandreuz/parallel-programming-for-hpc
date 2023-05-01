@@ -1,5 +1,7 @@
 #pragma once
 
+#include <complex.h>
+#include <stdlib.h>
 #include <fftw3.h>
 #include <mpi.h>
 

@@ -13,6 +13,7 @@
  */
 
 #include "utilities.h"
+#include "fft_3d.h"
 #include <stdbool.h>
 #include <string.h>
 
