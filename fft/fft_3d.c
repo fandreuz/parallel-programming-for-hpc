@@ -91,9 +91,10 @@ fftw_complex *fft_3d(double *data, int loc_n1, int n2, int n3) {
   }
 
   fftw_execute(many_dft_plan);
+  fftw_destroy_plan(many_dft_plan);
 
-  fftw_complex *fft_out_swap =
-      (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * loc_n1 * n2 * n3);
+  // fft_in is reused
+  fftw_complex *fft_out_swap = fft_in;
   swap_1_3(fft_out, fft_out_swap, loc_n1, n2, n3);
 
   int locRank, nProcesses;
@@ -115,9 +116,15 @@ fftw_complex *fft_3d(double *data, int loc_n1, int n2, int n3) {
       1, fft2_plan_size, n2 * newLocN3, exchanged, NULL, 1, fft2_plan_size[0],
       fft_out2, NULL, 1, fft2_plan_size[0], FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_execute(many_dft_plan2);
+  fftw_destroy_plan(many_dft_plan2);
 
   swap_1_3(fft_out2, exchanged, newLocN3, n2, n1);
   send_split(exchanged, fft_out, n1, n2, n3);
+
+  fftw_free(fft_in);
+  // fftw_free(fft_out_swap);
+  fftw_free(exchanged);
+  fftw_free(fft_out_2);
 
   return fft_out;
 }
