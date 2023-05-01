@@ -14,6 +14,9 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
 
   info.loc_n1 = div + locRank < res;
   info.loc_n1_offset = div * locRank + MIN(locRank, res);
+
+  info.n2 = n2;
+  info.n3 = n3;
   info.loc_n3 = n3 / nProcesses + n3 < (n3 % nProcesses);
 
   info.axis1_counts = (int *)malloc(sizeof(int) * nProcesses);
@@ -103,23 +106,27 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
                 MPI_COMM_WORLD);
 }
 
-void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info,
-              int n2, int n3) {
-  for (int i = 0; i < fft_3d_info->loc_n1 * n2 * n3; i++) {
+void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
+  for (int i = 0; i < fft_3d_info->loc_n1 * fft_3d_info->n2 * fft_3d_info->n3;
+       i++) {
     fft_in[i] = data[i] + 0.0 * I;
   }
   fftw_execute(info->fft_2d_many);
   // swap fft_2d_out into fft_2d_in
-  swap_1_3(info->fft_2d_out, info->fft_2d_in, fft_3d_info->loc_n1, n2, n3);
+  swap_1_3(info->fft_2d_out, info->fft_2d_in, fft_3d_info->loc_n1,
+           fft_3d_info->n2, fft_3d_info->n3);
 
-  send_split(info->fft_2d_in, info->fft_1d_in, fft_3d_info->n1, n2, n3,
-             fft_3d_info->axis1_counts, fft_3d_info->axis3_counts);
+  send_split(info->fft_2d_in, info->fft_1d_in, fft_3d_info->n1, fft_3d_info->n2,
+             fft_3d_info->n3, fft_3d_info->axis1_counts,
+             fft_3d_info->axis3_counts);
   fftw_execute(info->fft_1d_many);
 
-  swap_1_3(info->fft_1d_out, info->fft_1d_in, info.loc_n3, n2, fft_3d_info->n1);
+  swap_1_3(info->fft_1d_out, info->fft_1d_in, info.loc_n3, fft_3d_info->n2,
+           fft_3d_info->n1);
 
-  send_split(info->fft_1d_in, out, n3, n2, fft_3d_info->n1,
-             fft_3d_info->axis3_counts, fft_3d_info->axis1_counts);
+  send_split(info->fft_1d_in, out, fft_3d_info->n3, fft_3d_info->n2,
+             fft_3d_info->n1, fft_3d_info->axis3_counts,
+             fft_3d_info->axis1_counts);
 }
 
 void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {

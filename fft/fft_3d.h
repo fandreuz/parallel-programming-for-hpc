@@ -8,6 +8,9 @@ struct Fft3dInfo {
   int loc_n1;
   int loc_n1_offset;
 
+  int n2;
+
+  int n3;
   int loc_n3;
 
   fftw_plan *fft_2d_many;
@@ -20,6 +23,5 @@ struct Fft3dInfo {
 };
 
 struct Fft3dInfo setup_fft3d(int n1, int n2, int n3);
-void fft_3d_2(double *data, double *out, struct Fft3dInfo *fft_3d_info, int n2,
-              int n3);
+void fft_3d_2(double *data, double *out, struct Fft3dInfo *fft_3d_info);
 void cleanup_fft3d(struct Fft3dInfo *fft_3d_info);
