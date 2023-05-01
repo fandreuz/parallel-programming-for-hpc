@@ -10,6 +10,8 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   int div = n1 / nProcesses;
   int res = n1 % nProcesses;
 
+  info->nProcesses = nProcesses;
+
   info->n1 = n1;
   info->loc_n1 = div;
   info->loc_n1 += locRank < res;
@@ -103,6 +105,25 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
       FFTW_BACKWARD, FFTW_ESTIMATE);
 }
 
+void rectify_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
+               int *n3_counts, int nProcesses) {
+  int i3_start = 0;
+  fftw_complex *data_walking = data;
+  for (int proc = 0; proc < nProcesses; ++proc) {
+    int i3_count = n3_counts[proc];
+
+    for (int i1 = 0; i1 < n1; ++i1) {
+      for (int i2 = 0; i2 < n2; ++i2) {
+        for (int i3 = i3_start; i3 < i3_start + i3_count; ++i3) {
+          out[i3 + i2 * n3 + i1 * n3 * n2] = *(data_walking++);
+        }
+      }
+    }
+
+    i3_start += i3_count;
+  }
+}
+
 void swap_1_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   for (int i1 = 0; i1 < n1; ++i1) {
     for (int i2 = 0; i2 < n2; ++i2) {
@@ -138,12 +159,18 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
 
   swap_1_3(fft_3d_info->fft_2d_out, fft_3d_info->fft_2d_in, fft_3d_info->loc_n1,
            fft_3d_info->n2, fft_3d_info->n3);
-  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_in, fft_3d_info);
+  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_out, fft_3d_info);
+  rectify_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in,
+            fft_3d_info->loc_n3, fft_3d_info->n2, fft_3d_info->n1,
+            fft_3d_info->nProcesses);
+
   fftw_execute(fft_3d_info->fft_1d_many);
 
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
-  send_split_back(fft_3d_info->fft_1d_in, out, fft_3d_info);
+  send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_2d_in, fft_3d_info);
+  rectify_3(fft_3d_info->fft_2d_in, out, fft_3d_info->loc_n1, fft_3d_info->n2,
+            fft_3d_info->n3, fft_3d_info->nProcesses);
 }
 
 void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
@@ -153,16 +180,23 @@ void ifft_3d_2(fftw_complex *data, double *out, struct Fft3dInfo *fft_3d_info) {
 
   swap_1_3(fft_3d_info->fft_2d_out, fft_3d_info->fft_2d_in, fft_3d_info->loc_n1,
            fft_3d_info->n2, fft_3d_info->n3);
-  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_in, fft_3d_info);
+  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_out, fft_3d_info);
+  rectify_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in,
+            fft_3d_info->loc_n3, fft_3d_info->n2, fft_3d_info->n1,
+            fft_3d_info->nProcesses);
+
   fftw_execute(fft_3d_info->ifft_1d_many);
 
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
-  send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_1d_out, fft_3d_info);
+  send_split_back(fft_3d_info->fft_1d_in, fft_3d_info->fft_2d_in, fft_3d_info);
+  rectify_3(fft_3d_info->fft_2d_in, fft_3d_info->fft_2d_out,
+            fft_3d_info->loc_n1, fft_3d_info->n2, fft_3d_info->n3,
+            fft_3d_info->nProcesses);
 
   double fac = 1.0 / (fft_3d_info->n1 * fft_3d_info->n2 * fft_3d_info->n3);
   for (int i = 0; i < loc_grid_size; ++i) {
-    out[i] = creal(fft_3d_info->fft_1d_out[i]) * fac;
+    out[i] = creal(fft_3d_info->fft_2d_out[i]) * fac;
   }
 }
 

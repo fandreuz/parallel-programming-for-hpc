@@ -7,6 +7,8 @@
 #include <string.h>
 
 struct Fft3dInfo {
+  int nProcesses;
+
   int n1;
   int loc_n1;
   int loc_n1_offset;
