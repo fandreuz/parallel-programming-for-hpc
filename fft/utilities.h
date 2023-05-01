@@ -43,4 +43,4 @@ typedef struct {
 } fftw_mpi_handler;
 #define MPI_HANDLER_TYPE 0
 
-#include "../diffusion_fft/src/utilities.h"
+#include "../diffusion_fft/utilities.h"
