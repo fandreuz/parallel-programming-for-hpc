@@ -12,6 +12,7 @@ struct Fft3dInfo setup_fft3d(int n1, int n2, int n3) {
 
   struct Fft3dInfo info;
 
+  info.n1 = n1;
   info.loc_n1 = div + locRank < res;
   info.loc_n1_offset = div * locRank + MIN(locRank, res);
 
