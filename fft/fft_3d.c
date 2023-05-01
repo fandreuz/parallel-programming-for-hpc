@@ -122,12 +122,12 @@ void fft_3d(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info,
              fft_3d_info->axis3_counts, fft_3d_info->axis1_counts);
 }
 
-void cleanup_fft3d(Fft3dInfo fft_3d_info) {
-  fftw_destroy_plan(info->fft_2d_many);
-  fftw_destroy_plan(info->fft_1d_many);
+void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
+  fftw_destroy_plan(fft_3d_info->fft_2d_many);
+  fftw_destroy_plan(fft_3d_info->fft_1d_many);
 
-  fftw_free(info.fft_2d_in);
-  fftw_free(info.fft_2d_out);
-  fftw_free(info.fft_1d_in);
-  fftw_free(info.fft_1d_out);
+  fftw_free(fft_3d_info->fft_2d_in);
+  fftw_free(fft_3d_info->fft_2d_out);
+  fftw_free(fft_3d_info->fft_1d_in);
+  fftw_free(fft_3d_info->fft_1d_out);
 }
