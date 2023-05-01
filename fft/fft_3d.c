@@ -103,8 +103,8 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
                 MPI_COMM_WORLD);
 }
 
-void fft_3d(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info,
-            int n2, int n3) {
+void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info,
+              int n2, int n3) {
   for (int i = 0; i < fft_3d_info->loc_n1 * n2 * n3; i++) {
     fft_in[i] = data[i] + 0.0 * I;
   }

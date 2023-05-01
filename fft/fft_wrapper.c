@@ -110,7 +110,7 @@ void fft_3d(fftw_mpi_handler *fft, double *data_direct, fftw_complex *data_rec,
 
   // Now distinguish in which direction the FFT is performed
   if (direct_to_reciprocal) {
-    fft_3d(data_direct, data_rec, fft->fft_3d_info);
+    fft_3d_2(data_direct, data_rec, fft->fft_3d_info);
   } else {
 
     memcpy(fft->fftw_data, data_rec,
