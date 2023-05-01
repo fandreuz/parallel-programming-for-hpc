@@ -71,19 +71,22 @@ void send_split(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3) {
   }
 
   MPI_Alltoallv(data, send_counts, send_displacements, MPI_C_DOUBLE_COMPLEX,
-                recv_buffer, recv_counts, recv_displacements,
-                MPI_C_DOUBLE_COMPLEX, MPI_COMM_WORLD);
+                out, recv_counts, recv_displacements, MPI_C_DOUBLE_COMPLEX,
+                MPI_COMM_WORLD);
 }
 
-fftw_complex *fft_3d(double *data, int loc_n1, int n2, int n3) {
+fftw_complex *fft_3d(double *data, struct DataInfo axis1Info, int n2, int n3) {
+  int n1 = axis1Info.n1;
+  int loc_n1 = axis1Info.loc_n1;
+
   int N = loc_n1 * n2 * n3;
   fftw_complex *fft_in = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * N);
   fftw_complex *fft_out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * N);
 
   int fft_plan_size[] = {n2, n3};
   fftw_plan many_dft_plan = fftw_plan_many_dft(
-      2, fft_plan_size, loc_n1, in, NULL, 1,
-      fft_plan_size[0] * fft_plan_size[1], out, NULL, 1,
+      2, fft_plan_size, loc_n1, fft_in, NULL, 1,
+      fft_plan_size[0] * fft_plan_size[1], fft_out, NULL, 1,
       fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
 
   for (int i = 0; i < loc_n1 * n2 * n3; i++) {

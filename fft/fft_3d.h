@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 struct DataInfo {
+    int n1;
     int loc_n1;
     int loc_n1_offset;
 };
