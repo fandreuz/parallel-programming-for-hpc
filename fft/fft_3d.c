@@ -85,7 +85,7 @@ void send_split(fftw_complex *data, fftw_complex *out, int n2,
   int slice_size = axis1_counts[locRank] * n2;
   send_counts[0] = axis3_counts[0] * slice_size;
   send_displacements[0] = 0;
-  for (int i = 0; i < nProcesses; ++i) {
+  for (int i = 1; i < nProcesses; ++i) {
     send_counts[i] = axis3_counts[i] * slice_size;
     send_displacements[i] = send_counts[i] + send_displacements[i - 1];
   }
