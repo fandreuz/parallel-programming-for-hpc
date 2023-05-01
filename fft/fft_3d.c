@@ -115,15 +115,14 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
   swap_1_3(fft_3d_info->fft_2d_out, fft_3d_info->fft_2d_in, fft_3d_info->loc_n1,
            fft_3d_info->n2, fft_3d_info->n3);
 
-  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_in, fft_3d_info->n1,
-             fft_3d_info->n2, fft_3d_info->n3, fft_3d_info->axis1_counts,
-             fft_3d_info->axis3_counts);
+  send_split(fft_3d_info->fft_2d_in, fft_3d_info->fft_1d_in, fft_3d_info->n2,
+             fft_3d_info->axis1_counts, fft_3d_info->axis3_counts);
   fftw_execute(fft_3d_info->fft_1d_many);
 
   swap_1_3(fft_3d_info->fft_1d_out, fft_3d_info->fft_1d_in, fft_3d_info->loc_n3,
            fft_3d_info->n2, fft_3d_info->n1);
 
-  send_split(fft_3d_info->fft_1d_in, out fft_3d_info->n2,
+  send_split(fft_3d_info->fft_1d_in, out, fft_3d_info->n2,
              fft_3d_info->axis3_counts, fft_3d_info->axis1_counts);
 }
 
