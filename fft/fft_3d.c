@@ -111,7 +111,7 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
        i++) {
     fft_3d_info->fft_2d_in[i] = data[i] + 0.0 * I;
   }
-  fftw_execute(info->fft_2d_many);
+  fftw_execute(fft_3d_info->fft_2d_many);
   // swap fft_2d_out into fft_2d_in
   swap_1_3(fft_3d_info->fft_2d_out, fft_3d_info->fft_2d_in, fft_3d_info->loc_n1,
            fft_3d_info->n2, fft_3d_info->n3);
@@ -130,8 +130,8 @@ void fft_3d_2(double *data, fftw_complex *out, struct Fft3dInfo *fft_3d_info) {
 }
 
 void cleanup_fft3d(struct Fft3dInfo *fft_3d_info) {
-  fftw_destroy_plan(fft_3d_info->fft_2d_many);
-  fftw_destroy_plan(fft_3d_info->fft_1d_many);
+  fftw_destroy_plan(*(fft_3d_info->fft_2d_many));
+  fftw_destroy_plan(*(fft_3d_info->fft_1d_many));
 
   fftw_free(fft_3d_info->fft_2d_in);
   fftw_free(fft_3d_info->fft_2d_out);
