@@ -1,6 +1,5 @@
 #pragma once
 
-#include "fft_3d.h"
 #include <fftw3.h>
 #include <mpi.h>
 
