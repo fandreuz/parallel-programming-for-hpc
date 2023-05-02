@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
     for (int i1 = 0; i1 < local_size_grid; ++i1)
       conc[i1] += dt * dconc[i1];
 
-    if (istep % 30 == 1) {
+    if (istep % 10 == 1) {
       // Check the normalization of conc
       send_buffer[0] = 0.0; // ss
       send_buffer[1] = 0.0; // r2mean
