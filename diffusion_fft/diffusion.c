@@ -84,12 +84,14 @@ int main(int argc, char *argv[]) {
   double ss;
   MPI_Allreduce(&ss_send, &ss, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+#ifdef PLOT_DATA
   plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
                1, diffusivity);
   plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
                2, diffusivity);
   plot_data_2d("diffusivity", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
                3, diffusivity);
+#endif
 
   double fac = L1 * L2 * L3 / (n1 * n2 * n3);
 
@@ -165,10 +167,12 @@ int main(int argc, char *argv[]) {
                recv_buffer[1], recv_buffer[0], (end - start) / istep);
       }
 
+#ifdef PLOT_DATA
       plot_data_2d("concentration", n1, n2, n3, fft_h.local_n1,
                    fft_h.local_n1_offset, 2, conc);
       plot_data_1d("1d_conc", n1, n2, n3, fft_h.local_n1, fft_h.local_n1_offset,
                    3, conc);
+#endif
     }
   }
 
