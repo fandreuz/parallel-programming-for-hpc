@@ -7,12 +7,13 @@ void init_fftw(fftw_mpi_handler *fft, int n1, int n2, int n3, MPI_Comm comm) {
   fftw_mpi_init();
   fft->mpi_comm = comm;
 
-  fft->global_size_grid = n1 * n2 * n3;
-  fft->local_size_grid = fftw_mpi_local_size_3d(
-      n1, n2, n3, fft->mpi_comm, &fft->local_n1, &fft->local_n1_offset);
-
   fft->fft_3d_info = (struct Fft3dInfo *)malloc(sizeof(struct Fft3dInfo));
   setup_fft3d(fft->fft_3d_info, n1, n2, n3);
+
+  fft->local_n1 = fft->fft_3d_info->loc_n1;
+  fft->local_n1_offset = fft->fft_3d_info->loc_n1_offset;
+  fft->local_size_grid = fft->local_n1 * n2 * n3;
+  fft->global_size_grid = n1 * n2 * n3;
 }
 
 void close_fftw(fftw_mpi_handler *fft) {
