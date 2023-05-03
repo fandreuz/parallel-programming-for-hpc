@@ -1,6 +1,6 @@
 import re
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from string import Template
 
 dirs = ("diffusion_fft", "fft")
@@ -11,7 +11,7 @@ data = {dir: {} for dir in dirs}
 for dir, file_pattern in zip(dirs, file_patterns):
     for proc in procs:
         times = []
-        with open(f"{dir}/" + file_pattern.substitute(proc), "r") as file:
+        with open(f"{dir}/" + file_pattern.substitute(n=proc), "r") as file:
             for line in file.readlines():
                 matcher = re.search("time per iteration (\d+\.\d+)", line)
                 if matcher:
@@ -27,7 +27,7 @@ plt.figure(figsize=(20, 6))
 
 width = 0.25
 plt.bar(procs, as_list(data["diffusion_fft"]), width, edgecolor="k", label="FFTW")
-plt.bar(procs + width, as_list(data["fft"]), width, edgecolor="k", label="MPI_Alltoall")
+plt.bar(procs + width, as_list(data["fft"]), width, edgecolor="k", label="MPI_Alltoallv")
 
 plt.ylabel("Seconds/iteration")
 plt.xlabel("MPI processes")
