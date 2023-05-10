@@ -85,24 +85,68 @@ void setup_fft3d(struct Fft3dInfo *info, int n1, int n2, int n3) {
   // initialize FFTW plans
 
   int fft_plan_size[] = {n2, n3};
-  info->fft_2d_many = fftw_plan_many_dft(
-      2, fft_plan_size, info->loc_n1, info->fft_2d_in, fft_plan_size, 1,
-      fft_plan_size[0] * fft_plan_size[1], info->fft_2d_out, fft_plan_size, 1,
-      fft_plan_size[0] * fft_plan_size[1], FFTW_FORWARD, FFTW_ESTIMATE);
-  info->ifft_2d_many = fftw_plan_many_dft(
-      2, fft_plan_size, info->loc_n1, info->fft_2d_in, fft_plan_size, 1,
-      fft_plan_size[0] * fft_plan_size[1], info->fft_2d_out, fft_plan_size, 1,
-      fft_plan_size[0] * fft_plan_size[1], FFTW_BACKWARD, FFTW_ESTIMATE);
+  info->fft_2d_many = fftw_plan_many_dft(  //
+      2,                                   // rank
+      fft_plan_size,                       // *n
+      info->loc_n1,                        // howmany
+      info->fft_2d_in,                     // *in
+      fft_plan_size,                       // inembed
+      1,                                   // istride
+      fft_plan_size[0] * fft_plan_size[1], // idist
+      info->fft_2d_out,                    // *out
+      fft_plan_size,                       // *onembed
+      1,                                   // ostride
+      fft_plan_size[0] * fft_plan_size[1], // odist
+      FFTW_FORWARD,                        // sign
+      FFTW_ESTIMATE                        // flags
+  );
+  info->ifft_2d_many = fftw_plan_many_dft( //
+      2,                                   // rank
+      fft_plan_size,                       // *n
+      info->loc_n1,                        // howmany
+      info->fft_2d_in,                     // *in
+      fft_plan_size,                       // inembed
+      1,                                   // istride
+      fft_plan_size[0] * fft_plan_size[1], // idist
+      info->fft_2d_out,                    // *out
+      fft_plan_size,                       // *onembed
+      1,                                   // ostride
+      fft_plan_size[0] * fft_plan_size[1], // odist
+      FFTW_BACKWARD,                       // sign
+      FFTW_ESTIMATE                        // flags
+  );
 
   int fft2_plan_size[] = {n1};
-  info->fft_1d_many = fftw_plan_many_dft(
-      1, fft2_plan_size, n2 * info->loc_n3, info->fft_1d_in, fft2_plan_size, 1,
-      fft2_plan_size[0], info->fft_1d_out, fft2_plan_size, 1, fft2_plan_size[0],
-      FFTW_FORWARD, FFTW_ESTIMATE);
-  info->ifft_1d_many = fftw_plan_many_dft(
-      1, fft2_plan_size, n2 * info->loc_n3, info->fft_1d_in, fft2_plan_size, 1,
-      fft2_plan_size[0], info->fft_1d_out, fft2_plan_size, 1, fft2_plan_size[0],
-      FFTW_BACKWARD, FFTW_ESTIMATE);
+  info->fft_1d_many = fftw_plan_many_dft( //
+      1,                                  // rank
+      fft2_plan_size,                     // *n
+      n2 * info->loc_n3,                  // howmany
+      info->fft_1d_in,                    // *in
+      fft2_plan_size,                     // inembed
+      1,                                  // istride
+      fft2_plan_size[0],                  // idist
+      info->fft_1d_out,                   // *out
+      fft2_plan_size,                     // *onembed
+      1,                                  // ostride
+      fft2_plan_size[0],                  // odist
+      FFTW_FORWARD,                       // sign
+      FFTW_ESTIMATE                       // flags
+  );
+  info->ifft_1d_many = fftw_plan_many_dft( //
+      1,                                   // rank
+      fft2_plan_size,                      // *n
+      n2 * info->loc_n3,                   // howmany
+      info->fft_1d_in,                     // *in
+      fft2_plan_size,                      // inembed
+      1,                                   // istride
+      fft2_plan_size[0],                   // idist
+      info->fft_1d_out,                    // *out
+      fft2_plan_size,                      // *onembed
+      1,                                   // ostride
+      fft2_plan_size[0],                   // odist
+      FFTW_BACKWARD,                       // sign
+      FFTW_ESTIMATE                        // flags
+  );
 }
 
 void rectify_3(fftw_complex *data, fftw_complex *out, int n1, int n2, int n3,
