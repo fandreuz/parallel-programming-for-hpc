@@ -1,9 +1,9 @@
 #pragma once
 
 #include <complex.h>
-#include <stdlib.h>
 #include <fftw3.h>
 #include <mpi.h>
+#include <stdlib.h>
 #include <string.h>
 
 struct Fft3dInfo {
@@ -14,9 +14,9 @@ struct Fft3dInfo {
   int loc_n1_offset;
 
   int n2;
+  int loc_n2;
 
   int n3;
-  int loc_n3;
 
   fftw_plan fft_2d_many;
   fftw_plan fft_1d_many;
@@ -29,8 +29,7 @@ struct Fft3dInfo {
   fftw_complex *fft_1d_out;
 
   int *axis1_counts;
-  int *axis3_counts;
-
+  int *axis2_counts;
   int *send_counts;
   int *send_displacements;
   int *recv_counts;
