@@ -25,3 +25,7 @@ Distributed matrix multiplication ([matmul](matmul)) with MPI, BLAS and cuBLAS.
 ### Jacobi (MPI, OpenACC)
 
 ![](imgs/jacobi_10000_1000.png)
+
+### FFT 3D (FFTW, `MPI_Alltoallv`)
+
+![](imgs/fft3d.png)
