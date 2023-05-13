@@ -6,7 +6,7 @@ MODE = 0
 FLAGS = -Wall -Wextra
 HPC_FLAGS = -O3
 COMPILER = mpic++
-UTILITIES = identityMatrix.cpp utils.cpp
+UTILITIES = ../identity_matrix/identityMatrix.cpp ../distributed_utilities/utils.cpp
 SRC = matmulSquareDistributed.cpp
 
 ifeq "$(MODE)" "2"

@@ -1,4 +1,4 @@
-#include "identityMatrix.hpp"
+#include "../identity_matrix/identityMatrix.hpp"
 #include <string>
 
 #if MODE == 2

@@ -61,6 +61,9 @@ int main(int argc, char *argv[]) {
     incrementStart += myRank * increment;
   }
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  double t_start = MPI_Wtime();
+
   int matrixElementsCount = (myRows + 2) * (dimension + 2);
   double *matrix = (double *)malloc(sizeof(double) * matrixElementsCount);
   double *matrix_new = (double *)malloc(sizeof(double) * matrixElementsCount);
@@ -99,9 +102,6 @@ int main(int argc, char *argv[]) {
     int sendBottomIdx = myRows * rowSize + 1;
     int recvBottomIdx = sendBottomIdx + rowSize;
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    double t_start = MPI_Wtime();
-
     for (size_t it = 0; it < iterations / 2; ++it) {
 
       evolve(matrix_new, matrix, myRows, dimension);
@@ -129,13 +129,13 @@ int main(int argc, char *argv[]) {
                      0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       }
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    double t_end = MPI_Wtime();
-
-    if (myRank == 0)
-      printf("\nelapsed time = %f seconds\n", t_end - t_start);
   }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  double t_end = MPI_Wtime();
+
+  if (myRank == 0)
+    printf("\nelapsed time = %f seconds\n", t_end - t_start);
 
   free(matrix);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.hpp"
+#include "../distributed_utilities/utils.hpp"
 #include <cstring>
 #include <mpi.h>
 
