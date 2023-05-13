@@ -128,38 +128,38 @@ int main(int argc, char *argv[]) {
                      0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       }
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t_end = MPI_Wtime();
+
+    if (myRank == 0)
+      printf("\nelapsed time = %f seconds\n", t_end - t_start);
   }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  double t_end = MPI_Wtime();
-
-  if (myRank == 0)
-    printf("\nelapsed time = %f seconds\n", t_end - t_start);
 
   if (myRank == 0) {
     FILE *file = fopen("solution.dat", "w");
 
     // top
     for (size_t j = 0; j < dimension + 2; ++j)
-      fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix[j]);
+      fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix_new[j]);
 
-    save_gnuplot(file, matrix, myRows, dimension);
+    save_gnuplot(file, matrix_new, myRows, dimension);
 
     int procRows = myRows;
     for (int proc = 1; proc < nProcesses; ++proc) {
       procRows = compute_my_rows(proc, dimension, nProcesses);
-      MPI_Recv(matrix, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
+      MPI_Recv(matrix_new, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      save_gnuplot(file, matrix, procRows, dimension);
+      save_gnuplot(file, matrix_new, procRows, dimension);
     }
 
     // bottom
     for (size_t j = 0; j < dimension + 2; ++j)
       fprintf(file, "%f\t%f\t%f\n", h * j, 0,
-              matrix[(procRows + 1) * (dimension + 2) + j]);
+              matrix_new[(procRows + 1) * (dimension + 2) + j]);
     fclose(file);
   } else {
-    MPI_Send(matrix, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
+    MPI_Send(matrix_new, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
              MPI_COMM_WORLD);
   }
 
