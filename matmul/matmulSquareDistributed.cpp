@@ -1,15 +1,18 @@
 #include "../identity_matrix/identityMatrix.hpp"
 #include <string>
 
+/*
+ * MODE:
+ * - 0: Custom memory order
+ * - 1: Row-major order
+ * - 2: BLAS
+ * - 3: cuBLAS
+ */
+
 #if MODE == 2
 #include <cblas.h>
 #endif
 
-/**
- * A is mem-copied immediately to the device, B is moved as soon as we get a
- * columns block. We allocate immediately space on the device for the full C,
- * and we mem-copy C to the host after the whole computation.
- */
 #if MODE == 3
 #include <cublas_v2.h>
 #endif
@@ -28,7 +31,6 @@ int main(int argc, char *argv[]) {
 #elif MODE == 3
   int n_gpus;
   cudaGetDeviceCount(&n_gpus);
-
   cudaSetDevice(myRank % n_gpus);
 #endif
 
@@ -36,10 +38,6 @@ int main(int argc, char *argv[]) {
   double *A = initIdentityMatrix(myRank, nProcesses, myRows);
   int myRowsB;
   double *B = initIdentityMatrix(myRank, nProcesses, myRowsB);
-  if (myRows != myRowsB) {
-    std::cerr << "An error occurred" << std::endl;
-    return 1;
-  }
 
   int remainder = SIZE % nProcesses;
   int div = SIZE / nProcesses;
@@ -55,6 +53,7 @@ int main(int argc, char *argv[]) {
         shifted_cumsum_splits[proc - 1] + splits[proc - 1];
   }
 
+  // prepare some data to verify the result of matmul
   double *A2 = scalarAddMul(1, 2, A, myRows);
   double *B2 = scalarAddMul(5, 2, B, myRows);
   delete[] A;
@@ -144,19 +143,17 @@ int main(int argc, char *argv[]) {
     checkpoint2 = MPI_Wtime();
     MPI_Allgatherv(B_send_buffer, myRows * n_cols_B_sent, MPI_DOUBLE,
                    B_col_block, recv_count, displ, MPI_DOUBLE, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     checkpoint3 = MPI_Wtime();
 
-// find top-left corner of the block of C we're writing
+    int C_write_offset = shifted_cumsum_splits[proc];
 #if MODE == 3
-    double *C_write = dev_c + shifted_cumsum_splits[proc];
-
+    double *C_write = dev_c + C_write_offset;
     cudaMemcpy(dev_b, B_col_block, SIZE * n_cols_B_sent * sizeof(double),
                cudaMemcpyHostToDevice);
     MPI_Barrier(MPI_COMM_WORLD);
     checkpoint4 = MPI_Wtime();
 #else
-    double *C_write = C + shifted_cumsum_splits[proc];
+    double *C_write = C + C_write_offset;
     checkpoint4 = checkpoint3;
 #endif
 
@@ -251,6 +248,13 @@ int main(int argc, char *argv[]) {
   delete[] B2;
   delete[] C;
 
+#if MODE == 3
+  cudaFree(dev_a);
+  cudaFree(dev_b);
+  cudaFree(dev_c);
+  cublasDestroy(handle);
+#endif
+
   if (myRank == 0) {
     std::ofstream proc_out;
     proc_out.open("proc" + std::to_string(myRank) + ".out");
@@ -259,13 +263,6 @@ int main(int argc, char *argv[]) {
 
     proc_out.close();
   }
-
-#if MODE == 3
-  cudaFree(dev_a);
-  cudaFree(dev_b);
-  cudaFree(dev_c);
-  cublasDestroy(handle);
-#endif
 
   MPI_Finalize();
 }
