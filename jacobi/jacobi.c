@@ -62,7 +62,8 @@ int main(int argc, char *argv[]) {
   }
 
   int matrixElementsCount = (myRows + 2) * (dimension + 2);
-  double *matrix, *matrix_new;
+  double *matrix = (double *)malloc(sizeof(double) * matrixElementsCount);
+  double *matrix_new = (double *)malloc(sizeof(double) * matrixElementsCount);
 #pragma acc data create(                                                       \
     matrix[:matrixElementsCount], matrix_new[:matrixElementsCount])            \
     copyout(matrix_new[:matrixElementsCount])
@@ -148,8 +149,8 @@ int main(int argc, char *argv[]) {
     int procRows = myRows;
     for (int proc = 1; proc < nProcesses; ++proc) {
       procRows = compute_my_rows(proc, dimension, nProcesses);
-      MPI_Recv(matrix_new, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(matrix_new, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc,
+               0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       save_gnuplot(file, matrix_new, procRows, dimension);
     }
 
