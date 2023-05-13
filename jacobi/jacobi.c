@@ -71,8 +71,9 @@ int main(int argc, char *argv[]) {
     matrix[:matrixElementsCount], matrix_new[:matrixElementsCount])            \
     copyout(matrix_new[:matrixElementsCount])
   {
-#pragma acc parallel loop
+#pragma acc parallel loop gang
     for (size_t i = 0; i < myRows + 2; ++i)
+    #pragma acc loop vector
       for (size_t j = 0; j < dimension + 2; ++j)
         matrix[(i * (dimension + 2)) + j] = 0.5;
 
