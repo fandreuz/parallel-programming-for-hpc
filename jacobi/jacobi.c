@@ -7,8 +7,7 @@
 
 const double h = 0.1;
 
-void evolve(double *matrix_new, double *matrix, size_t myRows,
-            size_t dimension);
+void evolve(double *src, double *out, size_t myRows, size_t dimension);
 
 int computeAbovePeer(int myRank);
 int computeBelowPeer(int myRank, int nProcesses);
@@ -53,8 +52,6 @@ int main(int argc, char *argv[]) {
 
   size_t myRows = compute_my_rows(myRank, dimension, nProcesses);
 
-  double *matrix, *matrix_new;
-
   // borders
   double increment = 100.0 / (dimension + 1);
   double incrementStart = increment * dimension * (double)myRank / nProcesses;
@@ -65,45 +62,45 @@ int main(int argc, char *argv[]) {
   }
 
   int matrixElementsCount = (myRows + 2) * (dimension + 2);
-  int byte_dimension = sizeof(double) * matrixElementsCount;
-  matrix = (double *)malloc(byte_dimension);
-  matrix_new = (double *)malloc(byte_dimension);
-
-  memset(matrix, 0, byte_dimension);
-  memset(matrix_new, 0, byte_dimension);
-
-  for (size_t i = 1; i <= myRows; ++i)
-    for (size_t j = 1; j <= dimension; ++j)
-      matrix[(i * (dimension + 2)) + j] = 0.5;
-
-  for (size_t i = 1; i <= myRows + 1; ++i) {
-    matrix[i * (dimension + 2)] = i * increment + incrementStart;
-    matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
-  }
-
-  if (myRank == nProcesses - 1) {
-    for (size_t i = 1; i <= dimension + 1; ++i) {
-      matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-          i * increment;
-      matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-          i * increment;
-    }
-  }
-
-  int rowSize = 1 + dimension + 1;
-
-  int recvTopIdx = 1;
-  int sendTopIdx = recvTopIdx + rowSize;
-
-  int sendBottomIdx = myRows * rowSize + 1;
-  int recvBottomIdx = sendBottomIdx + rowSize;
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  double t_start = MPI_Wtime();
-
-#pragma acc data copy(matrix [0:matrixElementsCount])                          \
-    copyin(matrix_new [0:matrixElementsCount])
+  double *matrix, *matrix_new;
+#pragma acc data create(                                                       \
+    matrix[:matrixElementsCount], matrix_new[:matrixElementsCount])            \
+    copyout(matrix_new[:matrixElementsCount])
   {
+#pragma acc parallel loop
+    for (size_t i = 0; i < myRows + 2; ++i)
+      for (size_t j = 0; j < dimension + 2; ++j)
+        matrix[(i * (dimension + 2)) + j] = 0.5;
+
+// left border
+#pragma acc parallel loop
+    for (size_t i = 1; i <= myRows + 1; ++i) {
+      matrix[i * (dimension + 2)] = i * increment + incrementStart;
+      matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
+    }
+
+    // bottom
+    if (myRank == nProcesses - 1) {
+#pragma acc parallel loop
+      for (size_t i = 1; i <= dimension + 1; ++i) {
+        matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+            i * increment;
+        matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+            i * increment;
+      }
+    }
+
+    int rowSize = 1 + dimension + 1;
+
+    int recvTopIdx = 1;
+    int sendTopIdx = recvTopIdx + rowSize;
+
+    int sendBottomIdx = myRows * rowSize + 1;
+    int recvBottomIdx = sendBottomIdx + rowSize;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t_start = MPI_Wtime();
+
     for (size_t it = 0; it < iterations / 2; ++it) {
 
       evolve(matrix_new, matrix, myRows, dimension);
@@ -171,16 +168,15 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void evolve(double *matrix_new, double *matrix, size_t myRows,
-            size_t dimension) {
-#pragma acc parallel loop present(matrix, matrix_new)
+void evolve(double *src, double *out, size_t myRows, size_t dimension) {
+#pragma acc parallel loop present(src, out) collapse(2)
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
-      matrix[(i * (dimension + 2)) + j] =
-          (0.25) * (matrix_new[((i - 1) * (dimension + 2)) + j] +
-                    matrix_new[(i * (dimension + 2)) + (j + 1)] +
-                    matrix_new[((i + 1) * (dimension + 2)) + j] +
-                    matrix_new[(i * (dimension + 2)) + (j - 1)]);
+      out[(i * (dimension + 2)) + j] =
+          (0.25) * (src[((i - 1) * (dimension + 2)) + j] +
+                    src[(i * (dimension + 2)) + (j + 1)] +
+                    src[((i + 1) * (dimension + 2)) + j] +
+                    src[(i * (dimension + 2)) + (j - 1)]);
 }
 
 size_t compute_my_rows(int myRank, int dimension, int nProcesses) {
