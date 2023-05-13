@@ -137,6 +137,8 @@ int main(int argc, char *argv[]) {
       printf("\nelapsed time = %f seconds\n", t_end - t_start);
   }
 
+  free(matrix);
+
   if (myRank == 0) {
     FILE *file = fopen("solution.dat", "w");
 
@@ -163,6 +165,8 @@ int main(int argc, char *argv[]) {
     MPI_Send(matrix_new, (myRows + 2) * (dimension + 2), MPI_DOUBLE, 0, 0,
              MPI_COMM_WORLD);
   }
+
+  free(matrix_new);
 
   MPI_Finalize();
 
