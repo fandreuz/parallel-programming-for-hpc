@@ -81,11 +81,13 @@ int main(int argc, char *argv[]) {
     matrix_new[i * (dimension + 2)] = i * increment + incrementStart;
   }
 
-  for (size_t i = 1; i <= dimension + 1; ++i) {
-    matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-        i * increment;
-    matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
-        i * increment;
+  if (myRank == nProcesses - 1) {
+    for (size_t i = 1; i <= dimension + 1; ++i) {
+      matrix[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+          i * increment;
+      matrix_new[((myRows + 1) * (dimension + 2)) + (dimension + 1 - i)] =
+          i * increment;
+    }
   }
 
   int rowSize = 1 + dimension + 1;
