@@ -7,13 +7,17 @@
 
 const double h = 0.1;
 
-void evolve(double *src, double *out, size_t myRows, size_t dimension);
-
+// MPI utilities
 int computeAbovePeer(int myRank);
 int computeBelowPeer(int myRank, int nProcesses);
-size_t compute_my_rows(int myRank, int dimension, int nProcesses);
+size_t computeMyRows(int myRank, int dimension, int nProcesses);
 
-void save_gnuplot(FILE *file, const double *M, size_t myRows, size_t dim);
+// Main simulation method
+void evolve(const double *src, double *restrict out, size_t myRows,
+            size_t dimension);
+
+// Output
+void saveGnuplot(FILE *file, const double *M, size_t myRows, size_t dim);
 
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -50,7 +54,7 @@ int main(int argc, char *argv[]) {
     printf("number of iterations = %zu\n", iterations);
   }
 
-  size_t myRows = compute_my_rows(myRank, dimension, nProcesses);
+  size_t myRows = computeMyRows(myRank, dimension, nProcesses);
 
   int rowSize = 1 + dimension + 1;
 
@@ -149,14 +153,14 @@ int main(int argc, char *argv[]) {
     for (size_t j = 0; j < dimension + 2; ++j)
       fprintf(file, "%f\t%f\t%f\n", h * j, 0, matrix_new[j]);
 
-    save_gnuplot(file, matrix_new, myRows, dimension);
+    saveGnuplot(file, matrix_new, myRows, dimension);
 
     int procRows = myRows;
     for (int proc = 1; proc < nProcesses; ++proc) {
-      procRows = compute_my_rows(proc, dimension, nProcesses);
+      procRows = computeMyRows(proc, dimension, nProcesses);
       MPI_Recv(matrix_new, (procRows + 2) * (dimension + 2), MPI_DOUBLE, proc,
                0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      save_gnuplot(file, matrix_new, procRows, dimension);
+      saveGnuplot(file, matrix_new, procRows, dimension);
     }
 
     // bottom
@@ -176,7 +180,8 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void evolve(double *src, double *out, size_t myRows, size_t dimension) {
+void evolve(const double *src, double *restrict out, size_t myRows,
+            size_t dimension) {
 #pragma acc parallel loop present(src, out) collapse(2)
   for (size_t i = 1; i <= myRows; ++i)
     for (size_t j = 1; j <= dimension; ++j)
@@ -187,7 +192,7 @@ void evolve(double *src, double *out, size_t myRows, size_t dimension) {
                     src[(i * (dimension + 2)) + (j - 1)]);
 }
 
-size_t compute_my_rows(int myRank, int dimension, int nProcesses) {
+size_t computeMyRows(int myRank, int dimension, int nProcesses) {
   size_t myRows = dimension / nProcesses;
   myRows += myRank < dimension % nProcesses;
   return myRows;
@@ -207,8 +212,7 @@ int computeBelowPeer(int myRank, int nProcesses) {
   return myRank + 1;
 }
 
-void save_gnuplot(FILE *file, const double *M, size_t myRows,
-                  size_t dimension) {
+void saveGnuplot(FILE *file, const double *M, size_t myRows, size_t dimension) {
   for (size_t i = 1; i < myRows + 1; ++i)
     for (size_t j = 0; j < dimension + 2; ++j)
       fprintf(file, "%f\t%f\t%f\n", h * j, -h * i,
