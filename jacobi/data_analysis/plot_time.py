@@ -33,7 +33,7 @@ plt.bar(
 plt.ylabel("Seconds")
 plt.xlabel("MPI processes")
 
-plt.title("1 MPI and 1 GPU per node -- Grid $10000 \\times 10000$ (1000 iterations)")
+plt.title("$10000 \\times 10000$ (1000 iterations)")
 plt.legend()
 
 plt.yscale("log")
