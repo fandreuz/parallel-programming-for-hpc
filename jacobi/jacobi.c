@@ -13,7 +13,7 @@ int computeAbovePeer(int myRank);
 int computeBelowPeer(int myRank, int nProcesses);
 size_t compute_my_rows(int myRank, int dimension, int nProcesses);
 
-void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dim);
+void save_gnuplot(FILE *file, const double *M, size_t myRows, size_t dim);
 
 int main(int argc, char *argv[]) {
   int myRank, nProcesses;
@@ -52,6 +52,14 @@ int main(int argc, char *argv[]) {
 
   size_t myRows = compute_my_rows(myRank, dimension, nProcesses);
 
+  int rowSize = 1 + dimension + 1;
+
+  int recvTopIdx = 1;
+  int sendTopIdx = recvTopIdx + rowSize;
+
+  int sendBottomIdx = myRows * rowSize + 1;
+  int recvBottomIdx = sendBottomIdx + rowSize;
+
   // borders
   double increment = 100.0 / (dimension + 1);
   double incrementStart = increment * dimension * (double)myRank / nProcesses;
@@ -65,15 +73,15 @@ int main(int argc, char *argv[]) {
   double t_start = MPI_Wtime();
 
   int matrixElementsCount = (myRows + 2) * (dimension + 2);
-  double *matrix = (double *)malloc(sizeof(double) * matrixElementsCount);
-  double *matrix_new = (double *)malloc(sizeof(double) * matrixElementsCount);
+  double *const matrix = (double *)malloc(sizeof(double) * matrixElementsCount);
+  double *const matrix_new =
+      (double *)malloc(sizeof(double) * matrixElementsCount);
 #pragma acc data create(                                                       \
     matrix[:matrixElementsCount], matrix_new[:matrixElementsCount])            \
     copyout(matrix_new[:matrixElementsCount])
   {
-#pragma acc parallel loop gang
+#pragma acc parallel loop collapse(2)
     for (size_t i = 0; i < myRows + 2; ++i)
-    #pragma acc loop vector
       for (size_t j = 0; j < dimension + 2; ++j)
         matrix[(i * (dimension + 2)) + j] = 0.5;
 
@@ -95,17 +103,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    int rowSize = 1 + dimension + 1;
-
-    int recvTopIdx = 1;
-    int sendTopIdx = recvTopIdx + rowSize;
-
-    int sendBottomIdx = myRows * rowSize + 1;
-    int recvBottomIdx = sendBottomIdx + rowSize;
-
     for (size_t it = 0; it < iterations / 2; ++it) {
 
-      evolve(matrix_new, matrix, myRows, dimension);
+      // evolve/send is unrolled in the loop because OpenACC
+      // does not like pointer re-assignment
+      evolve(matrix, matrix_new, myRows, dimension);
 
 #pragma acc host_data use_device(matrix_new)
       {
@@ -118,7 +120,7 @@ int main(int argc, char *argv[]) {
                      MPI_STATUS_IGNORE);
       }
 
-      evolve(matrix, matrix_new, myRows, dimension);
+      evolve(matrix_new, matrix, myRows, dimension);
 
 #pragma acc host_data use_device(matrix)
       {
@@ -205,7 +207,8 @@ int computeBelowPeer(int myRank, int nProcesses) {
   return myRank + 1;
 }
 
-void save_gnuplot(FILE *file, double *M, size_t myRows, size_t dimension) {
+void save_gnuplot(FILE *file, const double *M, size_t myRows,
+                  size_t dimension) {
   for (size_t i = 1; i < myRows + 1; ++i)
     for (size_t j = 0; j < dimension + 2; ++j)
       fprintf(file, "%f\t%f\t%f\n", h * j, -h * i,
